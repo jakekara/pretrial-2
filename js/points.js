@@ -66,13 +66,21 @@ inventory.prototype.container = function(sel){
 inventory.prototype.generate_report = function(sel){
     sel.html("");
     sel.append("h1")
-	.text("Final report");
+	.text("Risk assessment summary");
 
     var summary = sel.append("div")
 	.classed("report-section", true);
 
     summary.append("h3")
 	.text("Risk score: " + numeral(this.score()).format("+0"));
+
+    summary.append("div")
+	.classed("explainer", true)
+	.text("Defendants with risk scores zero and above represent"
+	      + " little risk of failure to appear in court and are"
+	      + " typically recommended to be released without"
+	      + " financial bail."
+	      + " Risk scores that are negative indicate more risk.")
 
 
     var pre = summary.append("table")
@@ -86,8 +94,14 @@ inventory.prototype.generate_report = function(sel){
 	    .text(numeral(d.selected.val).format("+0"));
 
 	d3.select(this).append("td")
-	    .text("<strong>" + d.headline + ":</strong> "
+	    .html("<strong>" + d.headline + ":</strong> "
 		  + d.selected.description);
+    });
+}
+
+inventory.prototype.reset = function(){
+    this.factors.forEach(function(f){
+	f.selected = null;
     });
 }
 

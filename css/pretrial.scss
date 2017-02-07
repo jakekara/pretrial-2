@@ -5,20 +5,22 @@ body {
 }
 
 h1,h2,h3,h4,h5,h6{
+    margin-top: 0px;
     font-weight: 900;
 }
 
 div.factor, div.summary {
     margin: 10px;
-    margin-left: 20px;
-    margin-right: 20px;
     padding: 10px;
     /* border: 4px dotted lightgray; */
     border: 1px solid lightgray;
+    border-radius: 4px;
 }
 
 .summary table {
+    width: 100%;
     font-family: monaco, courier, monospace;
+    font-size: 14px;
 }
 
 tr:nth-child(even){
@@ -53,6 +55,12 @@ tr:nth-child(even){
     width: 50%;
     float: right;
     color: lightgray;
+    line-height: 2em;
+}
+
+.explainer {
+    font-size: 14px;
+    color: #555;
 }
 
 .nav-bar .next{
@@ -70,7 +78,7 @@ tr:nth-child(even){
 .nav-bar .next.enabled:hover,
 .nav-bar .prev:hover{
     cursor: pointer;
-    background-color: palegreen;
+    background-color: gray;
     color: white;
 }
 
