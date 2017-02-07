@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:400,900');
+
+body {
+    font-family: 'Lato', sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6{
+    font-weight: 900;
+}
+
+div.factor, div.summary {
+    margin: 10px;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 10px;
+    /* border: 4px dotted lightgray; */
+    border: 1px solid lightgray;
+}
+
+.summary table {
+    font-family: monaco, courier, monospace;
+}
+
+.summary table tr{
+    border-bottom: 1px solid lightgray;
+}
+
+.summary table tr td{
+    padding: 4px;
+}
+
+.factor ul {
+    list-style-type: none;
+}
+
+.factor ul li{
+    line-height: 2em;
+    padding-left: 2em;
+}
+
+.factor ul li:hover,
+.factor ul li.selected{
+    cursor: pointer;
+    background-color: lightgray;
+}
+
+.hidden {
+    display: none;
+}
+
+.nav-bar .next,
+.nav-bar .prev{
+    width: 50%;
+    float: right;
+    color: lightgray;
+}
+
+.nav-bar .next{
+    text-align:right;
+}
+.nav-bar .prev{
+    text-align:left;
+}
+
+.nav-bar .next.enabled,
+.nav-bar .prev {
+    color: gray;
+}
+
+.nav-bar .next.enabled:hover,
+.nav-bar .prev:hover{
+    cursor: pointer;
+    background-color: gray;
+    color: black;
+}
+
+.clear-both{
+    clear: both;
+}
+
+div.top-bar{
+    text-align: right;
+    position: relative;
+    top: 0px;
+    right: 0px;
+    font-size: 0.75em;
+    color: lightgray;
+}
