@@ -78,4 +78,15 @@ div.top-bar {
   font-size: 0.75em;
   color: lightgray; }
 
+.branding-bar {
+  text-align: right;
+  height: 20px;
+  margin-right: 10px; }
+
+.branding-bar div.logo {
+  max-height: 100%; }
+
+.branding-bar img {
+  height: 20px; }
+
 /*# sourceMappingURL=pretrial.css.map */
