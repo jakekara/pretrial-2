@@ -157,13 +157,25 @@ inventory.prototype.container = function(sel){
 }
 
 inventory.prototype.generate_report = function(sel){
+
     sel.html("");
-    sel.append("h1")
-	.text("Risk assessment summary");
+
+    var that = this;
+    var reset = sel.append("div")
+    	.classed("top-bar", true)
+	.append("span")
+	.classed("reset-button", true)
+    	.html(function(d, i){
+    	    return "RESET"
+    	})
+    	.on("click", function(){
+    	    that.reset().draw();
+    	});
 
     var summary = sel.append("div")
 	.classed("report-section", true);
 
+    
     summary.append("h3")
 	.text("Risk score: " + numeral(this.score()).format("+0"));
 
@@ -196,11 +208,13 @@ inventory.prototype.reset = function(){
     this.factors.forEach(function(f){
 	f.selected = null;
     });
+    return this;
 }
 
 inventory.prototype.draw = function(){
+    this.__container.html("");
     this.__selection = this.__container.append("div");
-
+    
     var show_factor = function( i ){
 	var sel = "div.factor[data-factor='" + i + "']";
 	d3.selectAll("div.factor[data-factor]").classed("hidden", true);
@@ -241,7 +255,6 @@ inventory.prototype.draw = function(){
 	});
 
     var enable_nav = function ( i ){
-	console.log("enabling");
 	d3.select(".factor[data-factor='" + i + "']")
 	    .select(".nav-bar")
 	    .selectAll("div")
@@ -326,6 +339,7 @@ inventory.prototype.draw = function(){
 	.classed("clear-both", true);
 
     show_factor( 0 );
+    return this;
 }
 
 },{"d3":3,"numeraljs":4}],3:[function(require,module,exports){

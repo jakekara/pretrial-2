@@ -61,7 +61,8 @@ tr:nth-child(even) {
   color: gray; }
 
 .nav-bar .next.enabled:hover,
-.nav-bar .prev:hover {
+.nav-bar .prev:hover,
+span.reset-button:hover {
   cursor: pointer;
   background-color: gray;
   color: white; }

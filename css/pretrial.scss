@@ -62,7 +62,6 @@ tr:nth-child(even){
     font-size: 14px;
     color: #555;
 }
-
 .nav-bar .next{
     text-align:right;
 }
@@ -76,7 +75,9 @@ tr:nth-child(even){
 }
 
 .nav-bar .next.enabled:hover,
-.nav-bar .prev:hover{
+.nav-bar .prev:hover,
+span.reset-button:hover
+{
     cursor: pointer;
     background-color: gray;
     color: white;
