@@ -86,11 +86,8 @@ inventory.prototype.generate_report = function(sel){
 	    .text(numeral(d.selected.val).format("+0"));
 
 	d3.select(this).append("td")
-	    .text(d.headline + "... ");
-
-
-	d3.select(this).append("td")
-	    .text(d.selected.description);
+	    .text("<strong>" + d.headline + ":</strong> "
+		  + d.selected.description);
     });
 }
 

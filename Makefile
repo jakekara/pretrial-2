@@ -1,4 +1,4 @@
-default: bundle.min.js pretrial.min.css
+default: clean bundle.min.js pretrial.min.css
 
 pretrial.min.css: pretrial.css
 	uglifycss css/pretrial.css > css/pretrial.min.css
@@ -11,3 +11,9 @@ bundle.min.js: bundle.js
 
 bundle.js: js/main.js
 	browserify js/main.js -o js/bundle.js
+
+clean:
+	rm -f js/bundle.js
+	rm -f js/bundle.min.js
+	rm -f css/pretrial.css
+	rm -f css/pretrial.min.css

@@ -21,8 +21,8 @@ div.factor, div.summary {
     font-family: monaco, courier, monospace;
 }
 
-.summary table tr{
-    border-bottom: 1px solid lightgray;
+tr:nth-child(even){
+    background-color: lightgoldenrodyellow;
 }
 
 .summary table tr td{
@@ -41,7 +41,7 @@ div.factor, div.summary {
 .factor ul li:hover,
 .factor ul li.selected{
     cursor: pointer;
-    background-color: lightgray;
+    background-color: lightgoldenrodyellow;
 }
 
 .hidden {
@@ -70,8 +70,8 @@ div.factor, div.summary {
 .nav-bar .next.enabled:hover,
 .nav-bar .prev:hover{
     cursor: pointer;
-    background-color: gray;
-    color: black;
+    background-color: palegreen;
+    color: white;
 }
 
 .clear-both{
@@ -86,3 +86,4 @@ div.top-bar{
     font-size: 0.75em;
     color: lightgray;
 }
+
