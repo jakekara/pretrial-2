@@ -218,7 +218,14 @@ inventory.prototype.draw = function(){
     var show_factor = function( i ){
 	var sel = "div.factor[data-factor='" + i + "']";
 	d3.selectAll("div.factor[data-factor]").classed("hidden", true);
-	d3.selectAll("div.factor[data-factor='"+i+"']").classed("hidden", false);
+	var target = d3.selectAll("div.factor[data-factor='"+i+"']");
+	target.classed("hidden", false);
+	target.style("margin-top", window.innerHeight + "px")
+	    .style("opacity",0);
+	target.transition().duration(500)
+	    .style("margin-top", 0 + "px")
+	    .style("opacity", 1);
+	
     };
 
     var report = this.__selection.append("div")
@@ -295,6 +302,16 @@ inventory.prototype.draw = function(){
 		enable_nav(d3.select(this).attr("data-factor"));
 		d3.select(this)
 		    .classed("selected", true);
+
+		var factor_i = Number(d3.select(this).attr("data-factor"));
+		
+		if (factor_i< num_factors - 1){
+		    console.log("auto-load next: " + (factor_i + 1) );
+		    show_factor( factor_i + 1 );
+		}
+		
+		if (factor_i == num_factors - 1)
+		    show_report();
 	    });
 	});
 
@@ -341,6 +358,7 @@ inventory.prototype.draw = function(){
     show_factor( 0 );
     return this;
 }
+
 
 },{"d3":3,"numeraljs":4}],3:[function(require,module,exports){
 // https://d3js.org Version 4.5.0. Copyright 2017 Mike Bostock.
