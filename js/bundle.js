@@ -1,7 +1,12 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 const d3 = require("d3");
+const numeral = require("numeraljs");
 const points = require("./points.js");
+const slider = require("./slider.js");
 
+
+var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
+var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 
 inventory = new points.inventory();
 
@@ -90,9 +95,236 @@ instrument = new points.factor("Dangerous instrument")
 inventory.container(d3.select("#container"));
 inventory.draw();
 
-},{"./points.js":2,"d3":3}],2:[function(require,module,exports){
+var risk_color = function(d, i){
+    var colors = ["maroon","tomato","orange","gold","yellow","lightyellow",
+		  "white","aliceblue","lightskyblue",
+		  "palegreen","forestgreen","navy","purple"];
+    return colors[i];
+};
+
+// Version 2 -- challenge
+var go_challenge = function(fel, mis){
+
+    var guess_value = null;
+    d3.select("#container").html("");
+    var challenge = d3.select("#container")
+	.append("div").classed("summary", true);
+
+
+    var header_sel = challenge.append("h1")
+	.text("How risky is this defendant?")
+    var explainer_sel = challenge.append("div")
+	.classed("explainer", true)
+	.text("Try your hand at guessing how much of a 'flight risk' you think this randomly-generated defendant represents. Judicial branch employees use some of the factors below in their pretrial risk assessment scale, which is used to make recommendations for bail. Beware, some of these factors are not part of the risk assessment.");
+    var summary_sel = challenge.append("div");
+    inventory.randomize().display_summary(summary_sel);
+    typewriter.prepare(".typewriter");
+
+
+    // var svg_container = challenge.append("div")
+    // 	.style("width","100%");
+    
+    // var svg = svg_container.append("svg");    
+    var svg_slider = new slider.slider()
+	.values([-6, 6])
+	.radius(20)
+	.reverse(true)
+	.ticks(["Very low risk",
+		"",
+	       "Very high risk"])
+    
+    var slider_sel =  challenge.append("div");
+    var result_sel = challenge.append("div").classed("result_sel", true);
+
+    var submit_guess = function(){
+	if (d3.select(this).classed("enabled") == false) return;
+	svg_slider.enabled(false);
+	summary_sel
+	// .style("filter","blur(2px)") //
+	    .transition()
+	    .duration(500)
+	    .style("opacity",0.5);
+	slider_sel
+	    .style("opacity",0.5)
+	    // .style("filter","blur(3px)");
+	d3.select("#submit-button").classed("enabled", false);
+	d3.select("#guess-slider").attr("disabled", true);
+	// d3.select("#picker-svg").classed("enabled", false);
+
+	// guess_value = -1 * Number(d3.select("#guess-slider").node().value);
+	guess_value = Math.round(svg_slider.value());
+	
+	d3.selectAll("td[data-factor]")
+	    .text(function(d, i){
+		var factor_i = d3.select(this).attr("data-factor");
+		return numeral(inventory.factors[factor_i].selected.val)
+		    .format("+0");
+	    });
+
+	typewriter.prepare(".typewriter-values");
+	
+	var g = guess_value;
+	
+	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
+	var score = inventory.score();
+	if (score > 9) score = 9;
+	if (score < -9) score = -9;
+
+	var off_by = Math.abs( g - score);
+	var headline = "You were off by " + off_by + ". Here's what that means...";
+	if (off_by == 0)
+	    headine = "Correct!"
+	
+	msg += "The actuarial pretrial risk assessment score based on "
+	    + "the factors above would be " + numeral(score).format("+0") + ".";
+	result_sel.append("h1")
+	    .text(headline);
+	result_sel.append("div").classed("explainer", true).text(msg);
+
+    }
+    
+    var add_slider = function(sel){
+
+	// var svg_height = 40;
+
+	var guess_display = sel.append("h1")
+	    .text("Your guess");
+
+	sel.append("div")
+	    .classed("explainer", true)
+	    .text("Set the slider to indicate your guess of this defendant's"
+		   + " risk score. From left to right, the slider ranges from"
+		   + " least to most risk.");
+	
+	var svg_container = sel.append("div")
+	    .style("width","100%");
+	
+	var svg = svg_container.append("svg");    
+
+	svg_slider.svg(svg)
+	    .draw();
+
+	// var slider = sel.append("input")
+	//     .attr("id","guess-slider")
+	//     .attr("type","range")
+	//     .attr("min",-6)
+	//     .attr("max",6);
+	// slider.node().value = 0;
+	
+	// var svg = sel.append("svg")
+	//     .attr("id","picker-svg")
+	//     .style("height", svg_height + "px")
+	//     .style("border","1px solid gray")
+	//     .classed("enabled", true)
+	//     .style("width", sel.node().getBoundingClientRect().width);
+
+	var submit = sel.append("div")
+	    .append("div")
+	    .classed("fake-button-container", true)
+	    .append("div")
+	    .classed("fake-button", true)
+	    .attr("id","submit-button")
+	    .classed("enabled", true)
+	    .text("Guess")
+	    .on("click", submit_guess);
+
+	sel.append("div").classed("clear-both", true)
+	
+	// var bbox = svg.node().getBoundingClientRect();
+	
+	// var hor_padding = 10;
+	// var radius = 10;
+	// var val_range = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6].reverse();
+	// var scale = d3.scaleLinear()
+	//     .domain([val_range[0],val_range.reverse()[0]])
+	//     .range([hor_padding, bbox.width - hor_padding])
+
+	// var scale_inv = d3.scaleLinear()
+	//     .domain([hor_padding, bbox.width - hor_padding])
+	//     .range(val_range);
+
+	// var box_count = 13;
+	// var box_width = bbox.width / box_count;
+
+	var guess = function(d, i){
+
+	    // if (svg.classed("enabled") == false) return;
+	    
+	    // svg.selectAll("rect.box")
+	    // 	.classed("selected", false);
+
+	    d3.select(this).classed("selected", true);
+
+	    guess_value = d3.select(this).attr("data-val");
+
+	    submit.classed("enabled", true);
+
+	}
+	
+	// svg.selectAll("rect.box")
+	//     .data(val_range)
+	//     .enter()
+	//     .append("rect")
+	//     .classed("box", true)
+	//     .attr("x",function(d, i){
+	// 	return i * box_width;
+	//     })
+	//     .attr("y", 0)
+	//     .attr("width",box_width)
+	//     .attr("height",svg_height)
+	//     .attr("data-val", function(d){ return d; })
+	//     .style("fill", risk_color)
+	//     .style("strok-width","0px")
+	//     .on("click", guess);
+	
+	
+
+    }
+
+    var example_offense = function(off_type, off_class){
+	if (off_type.toLowerCase() == "felony")
+	    var sheet = fel;
+	else if (off_type.toLowerCase() == "misdemeanor")
+	    var sheet = mis;
+
+	var options = sheet.filter(function(a){
+	    return a["class"].toUpperCase() == off_class.toUpperCase();
+	});
+
+
+	return options[Math.random() * options.length];
+    }
+
+
+    var type_across = function(i) {
+	if (i >= inventory.factors.length) return;
+	
+	typewriter.type(".tw" + i,{duration: 250})
+	    .then(function(){type_across(i + 1);});
+    }
+
+    
+    type_across(0);
+    
+    add_slider(slider_sel);
+
+}
+
+
+d3.json(felony_url, function(fel){
+    console.log("felonies", fel);
+    d3.json(misd_url, function(mis){
+	console.log("misdemeanors", mis);
+	go_challenge(fel, mis);
+    });
+});
+
+			      
+
+},{"./points.js":2,"./slider.js":3,"d3":10,"numeraljs":12}],2:[function(require,module,exports){
 d3 = require("d3");
 const numeral = require("numeraljs");
+typewriter = require("typewriter-js");
 
 var point = function(val, description){
     this.factor = null;
@@ -113,6 +345,11 @@ var factor = function(headline, description){
 };
 
 exports.factor = factor;
+
+factor.prototype.randomize = function (){
+    this.select(this.points[Math.floor(Math.random() * this.points.length)]);
+    return this;
+}
 
 factor.prototype.add_to = function(inv){
     inv.add_factor(this);
@@ -176,7 +413,7 @@ inventory.prototype.generate_report = function(sel){
 	.classed("report-section", true);
 
     
-    summary.append("h3")
+    summary.append("h1")
 	.text("Risk score: " + numeral(this.score()).format("+0"));
 
     summary.append("div")
@@ -222,7 +459,7 @@ inventory.prototype.draw = function(){
 	target.classed("hidden", false);
 	target.style("margin-top", window.innerHeight + "px")
 	    .style("opacity",0);
-	target.transition().duration(500)
+	target.transition().duration(250)
 	    .style("margin-top", 0 + "px")
 	    .style("opacity", 1);
 	
@@ -256,7 +493,7 @@ inventory.prototype.draw = function(){
 	    return (i + 1) + "/" + num_factors;
 	})
     
-    factors.append("h3")
+    factors.append("h1")
 	.text(function(d){
 	    return d.headline;
 	});
@@ -359,8 +596,486 @@ inventory.prototype.draw = function(){
     return this;
 }
 
+inventory.prototype.randomize = function(){
+    this.factors.forEach(function(f){ f.randomize(); });
+    return this;
+}
 
-},{"d3":3,"numeraljs":4}],3:[function(require,module,exports){
+inventory.prototype.summary_graph = function(){
+    var rets = [];
+    this.factors.forEach(function(f, i){
+	rets.push(f.headline + ": " + f.selected.description);
+    });
+
+    return rets.join("; ");
+}
+
+inventory.prototype.display_summary = function(sel){
+    sel.html("");
+
+    var table = sel.append("table")
+    
+    var rows = table.selectAll("tr")
+	.data(this.factors)
+	.enter()
+	.append("tr")
+
+
+
+    var scores = rows.append("td")
+	.attr("data-factor", function(f, i){
+	    return i;
+	})
+	.html("  ")
+
+	.each(function(d, i){
+	    d3.select(this)
+		.classed("twval" + i, true)
+	    	.classed("typewriter-values", true);
+	});
+    
+    var desc = rows.append("td")
+	.html(function(f){
+	    return f.headline + ": " + f.selected.description;
+	})
+    	.each(function(d, i){
+	    d3.select(this)
+		.classed("typewriter", true)
+		.classed("tw" + i, true);
+	});
+
+
+    
+	//     typewriter.type('.tw' + i);
+	// });
+
+
+}
+
+inventory.prototype.guesser = function(sel){
+    sel.html("");
+    var container = sel.append("div")
+	.classed("slider_container");
+}
+
+},{"d3":10,"numeraljs":12,"typewriter-js":13}],3:[function(require,module,exports){
+var slider = function(){
+    this.__enabled = true;
+    this.__radius = 10;
+    this.__stroke_width = 1;
+    return this;
+}
+
+exports.slider = slider;
+
+slider.prototype.svg = function(sel){
+    if (typeof(sel) == "undefined") return this.d3selection;
+    this.d3selection = sel;
+    return this;
+}
+
+slider.prototype.min_val = function(){
+    return this.domain()[0];
+}
+
+slider.prototype.max_val = function(){
+    return this.domain().reverse()[0];
+}
+
+slider.prototype.value = function(v){
+    if (typeof(v) == "undefined") return this.__value;
+    this.__value = v;
+    return this;
+}
+
+slider.prototype.values = function(arr){
+    if (typeof(arr) == "undefined") return this.__values;
+    this.__values = arr;
+    this.value(d3.mean(d3.extent(arr)));
+    return this;
+}
+
+slider.prototype.bbox = function(){
+    return this.svg().node().getBoundingClientRect();
+}
+
+slider.prototype.padding = function(){
+    return this.__stroke_width + this.__radius;
+}
+
+slider.prototype.domain = function(){
+    if (this.reverse() == true) return this.values().sort().reverse();
+    return this.values().sort();
+}
+
+slider.prototype.iscale = function(){
+    var range = [this.padding(),
+		 this.bbox().width - this.padding()];
+
+    return d3.scaleLinear()
+	.domain(range)
+	.range(this.domain());
+}
+
+slider.prototype.scale = function(){
+    var range = [this.padding(),
+		 this.bbox().width - this.padding()];
+
+    return d3.scaleLinear()
+	.domain(this.domain())
+	.range(range);
+}
+
+slider.prototype.axis = function(){
+    this.d3axis = d3.axisBottom()
+	.tickSize(this.padding())
+	.scale(this.scale());
+
+    var ticks = this.ticks();
+    var that = this;
+    if(typeof(ticks) != "undefined"){
+	that.d3axis.ticks(ticks.length)
+	    .tickFormat(function(i, j){
+		return ticks[j];
+	    })
+	    .tickSizeOuter(0)
+    }
+    
+    return this.d3axis;
+}
+
+slider.prototype.knob_position = function(){
+    var y = this.padding();
+    var x = this.scale()(this.value());
+    this.knob
+	.attr("cx", x)
+	.attr("cy", y);
+}
+
+slider.prototype.knob_type = function(kt){
+    if (typeof(kt) == "undefined") return this.__knob_type || "circle";
+    this.__knob_type = kt;
+    return this;
+}
+
+slider.prototype.knob_move_to = function(val){
+
+    if (typeof(val) == "undefined") return;
+
+    if (val > Math.max(this.min_val(),this.max_val())) return;
+
+    if(val < Math.min(this.min_val(), this.max_val())) return;
+
+    this.value(val);
+    this.knob_position();
+}
+
+slider.prototype.knob_make_draggable = function(){
+    var that = this;
+    var drag_end = function(){
+	console.log("enabled: " , that.enabled());
+	if (that.enabled() == false) return;
+	that.value(that.iscale()(d3.event.x));
+    }
+
+    var drag_drag = function(){
+	if (that.enabled() == false) return;
+	var x = d3.event.x;
+	var val = that.iscale()(x);
+	that.knob_move_to(val);
+    }
+
+    this.knob.call(d3.drag()
+		   .on("end", drag_end)
+		   .on("drag",drag_drag));
+}
+
+slider.prototype.reverse = function(v){
+    if (typeof(v) == "undefined") return this.__reverse || false;
+    this.__reverse = v;
+    return this;
+}
+
+slider.prototype.enabled = function(v){
+    if (typeof(v) == "undefined") return this.__enabled;
+    console.log("setting enabled to " + v);
+    this.__enabled = v;
+    if (v == false) this.svg().classed("disabled", true);
+    return this;
+}
+
+slider.prototype.ticks = function(arr){
+    if (typeof(arr) == "undefined") return this.__tick_labels;
+    this.__tick_labels = arr;
+    return this;
+}
+
+slider.prototype.radius = function(r){
+    if (typeof(r) == "undefined") return this.__radius;
+    this.__radius = r;
+    return this;
+}
+
+slider.prototype.draw = function(){
+
+    this.svg().html("");
+    this.svg().attr("width",
+		    this.svg().node().parentNode.getBoundingClientRect().width);
+    var container = this.svg().append("g");
+    
+    container.append("g")
+	.attr("transform", "translate(0," + this.padding() + ")")
+	.call(this.axis());
+
+    this.knob = container.append("g")
+	.append(this.knob_type())
+	.attr("r", this.radius())
+
+    this.knob_position();
+    this.knob_make_draggable();
+
+    this.svg().attr("height",
+		    container.node().getBBox().height
+		    + container.node().getBBox().y
+		    + "px");
+
+    var that = this;
+    d3.select(window).on("resize", function(){
+	that.draw()
+    });
+    return this;
+}
+
+},{}],4:[function(require,module,exports){
+/**
+ * An even better animation frame.
+ *
+ * @copyright Oleg Slobodskoi 2015
+ * @website https://github.com/kof/animationFrame
+ * @license MIT
+ */
+
+module.exports = require('./lib/animation-frame')
+
+},{"./lib/animation-frame":5}],5:[function(require,module,exports){
+'use strict'
+
+var nativeImpl = require('./native')
+var now = require('./now')
+var performance = require('./performance')
+
+// Weird native implementation doesn't work if context is defined.
+var nativeRequest = nativeImpl.request
+var nativeCancel = nativeImpl.cancel
+
+/**
+ * Animation frame constructor.
+ *
+ * Options:
+ *   - `useNative` use the native animation frame if possible, defaults to true
+ *   - `frameRate` pass a custom frame rate
+ *
+ * @param {Object|Number} options
+ */
+function AnimationFrame(options) {
+    if (!(this instanceof AnimationFrame)) return new AnimationFrame(options)
+    options || (options = {})
+
+    // Its a frame rate.
+    if (typeof options == 'number') options = {frameRate: options}
+    options.useNative != null || (options.useNative = true)
+    this.options = options
+    this.frameRate = options.frameRate || AnimationFrame.FRAME_RATE
+    this._frameLength = 1000 / this.frameRate
+    this._isCustomFrameRate = this.frameRate !== AnimationFrame.FRAME_RATE
+    this._timeoutId = null
+    this._callbacks = {}
+    this._lastTickTime = 0
+    this._tickCounter = 0
+}
+
+module.exports = AnimationFrame
+
+/**
+ * Default frame rate used for shim implementation. Native implementation
+ * will use the screen frame rate, but js have no way to detect it.
+ *
+ * If you know your target device, define it manually.
+ *
+ * @type {Number}
+ * @api public
+ */
+AnimationFrame.FRAME_RATE = 60
+
+/**
+ * Replace the globally defined implementation or define it globally.
+ *
+ * @param {Object|Number} [options]
+ * @api public
+ */
+AnimationFrame.shim = function(options) {
+    var animationFrame = new AnimationFrame(options)
+
+    window.requestAnimationFrame = function(callback) {
+        return animationFrame.request(callback)
+    }
+    window.cancelAnimationFrame = function(id) {
+        return animationFrame.cancel(id)
+    }
+
+    return animationFrame
+}
+
+/**
+ * Request animation frame.
+ * We will use the native RAF as soon as we know it does works.
+ *
+ * @param {Function} callback
+ * @return {Number} timeout id or requested animation frame id
+ * @api public
+ */
+AnimationFrame.prototype.request = function(callback) {
+    var self = this
+
+    // Alawys inc counter to ensure it never has a conflict with the native counter.
+    // After the feature test phase we don't know exactly which implementation has been used.
+    // Therefore on #cancel we do it for both.
+    ++this._tickCounter
+
+    if (nativeImpl.supported && this.options.useNative && !this._isCustomFrameRate) {
+        return nativeRequest(callback)
+    }
+
+    if (!callback) throw new TypeError('Not enough arguments')
+
+    if (this._timeoutId == null) {
+        // Much faster than Math.max
+        // http://jsperf.com/math-max-vs-comparison/3
+        // http://jsperf.com/date-now-vs-date-gettime/11
+        var delay = this._frameLength + this._lastTickTime - now()
+        if (delay < 0) delay = 0
+
+        this._timeoutId = setTimeout(function() {
+            self._lastTickTime = now()
+            self._timeoutId = null
+            ++self._tickCounter
+            var callbacks = self._callbacks
+            self._callbacks = {}
+            for (var id in callbacks) {
+                if (callbacks[id]) {
+                    if (nativeImpl.supported && self.options.useNative) {
+                        nativeRequest(callbacks[id])
+                    } else {
+                        callbacks[id](performance.now())
+                    }
+                }
+            }
+        }, delay)
+    }
+
+    this._callbacks[this._tickCounter] = callback
+
+    return this._tickCounter
+}
+
+/**
+ * Cancel animation frame.
+ *
+ * @param {Number} timeout id or requested animation frame id
+ *
+ * @api public
+ */
+AnimationFrame.prototype.cancel = function(id) {
+    if (nativeImpl.supported && this.options.useNative) nativeCancel(id)
+    delete this._callbacks[id]
+}
+
+},{"./native":6,"./now":7,"./performance":9}],6:[function(require,module,exports){
+'use strict'
+
+var global = window
+
+// Test if we are within a foreign domain. Use raf from the top if possible.
+try {
+    // Accessing .name will throw SecurityError within a foreign domain.
+    global.top.name
+    global = global.top
+} catch(e) {}
+
+exports.request = global.requestAnimationFrame
+exports.cancel = global.cancelAnimationFrame || global.cancelRequestAnimationFrame
+exports.supported = false
+
+var vendors = ['Webkit', 'Moz', 'ms', 'O']
+
+// Grab the native implementation.
+for (var i = 0; i < vendors.length && !exports.request; i++) {
+    exports.request = global[vendors[i] + 'RequestAnimationFrame']
+    exports.cancel = global[vendors[i] + 'CancelAnimationFrame'] ||
+        global[vendors[i] + 'CancelRequestAnimationFrame']
+}
+
+// Test if native implementation works.
+// There are some issues on ios6
+// http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
+// https://gist.github.com/KrofDrakula/5318048
+
+if (exports.request) {
+    exports.request.call(null, function() {
+        exports.supported = true
+    });
+}
+
+},{}],7:[function(require,module,exports){
+'use strict'
+
+/**
+ * Crossplatform Date.now()
+ *
+ * @return {Number} time in ms
+ * @api private
+ */
+module.exports = Date.now || function() {
+    return (new Date).getTime()
+}
+
+},{}],8:[function(require,module,exports){
+'use strict'
+
+var now = require('./now')
+
+/**
+ * Replacement for PerformanceTiming.navigationStart for the case when
+ * performance.now is not implemented.
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceTiming.navigationStart
+ *
+ * @type {Number}
+ * @api private
+ */
+exports.navigationStart = now()
+
+},{"./now":7}],9:[function(require,module,exports){
+'use strict'
+
+var now = require('./now')
+var PerformanceTiming = require('./performance-timing')
+
+/**
+ * Crossplatform performance.now()
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/API/Performance.now()
+ *
+ * @return {Number} relative time in ms
+ * @api public
+ */
+exports.now = function () {
+    if (window.performance && window.performance.now) return window.performance.now()
+    return now() - PerformanceTiming.navigationStart
+}
+
+
+},{"./now":7,"./performance-timing":8}],10:[function(require,module,exports){
 // https://d3js.org Version 4.5.0. Copyright 2017 Mike Bostock.
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -16767,7 +17482,68 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{}],4:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+module.exports = function(opts) {
+  return new ElementClass(opts)
+}
+
+function indexOf(arr, prop) {
+  if (arr.indexOf) return arr.indexOf(prop)
+  for (var i = 0, len = arr.length; i < len; i++)
+    if (arr[i] === prop) return i
+  return -1
+}
+
+function ElementClass(opts) {
+  if (!(this instanceof ElementClass)) return new ElementClass(opts)
+  var self = this
+  if (!opts) opts = {}
+
+  // similar doing instanceof HTMLElement but works in IE8
+  if (opts.nodeType) opts = {el: opts}
+
+  this.opts = opts
+  this.el = opts.el || document.body
+  if (typeof this.el !== 'object') this.el = document.querySelector(this.el)
+}
+
+ElementClass.prototype.add = function(className) {
+  var el = this.el
+  if (!el) return
+  if (el.className === "") return el.className = className
+  var classes = el.className.split(' ')
+  if (indexOf(classes, className) > -1) return classes
+  classes.push(className)
+  el.className = classes.join(' ')
+  return classes
+}
+
+ElementClass.prototype.remove = function(className) {
+  var el = this.el
+  if (!el) return
+  if (el.className === "") return
+  var classes = el.className.split(' ')
+  var idx = indexOf(classes, className)
+  if (idx > -1) classes.splice(idx, 1)
+  el.className = classes.join(' ')
+  return classes
+}
+
+ElementClass.prototype.has = function(className) {
+  var el = this.el
+  if (!el) return
+  var classes = el.className.split(' ')
+  return indexOf(classes, className) > -1
+}
+
+ElementClass.prototype.toggle = function(className) {
+  var el = this.el
+  if (!el) return
+  if (this.has(className)) this.remove(className)
+  else this.add(className)
+}
+
+},{}],12:[function(require,module,exports){
 /*!
  * numeral.js
  * version : 1.5.6
@@ -17448,4 +18224,119 @@ Object.defineProperty(exports, '__esModule', { value: true });
     }
 }).call(this);
 
-},{}]},{},[1]);
+},{}],13:[function(require,module,exports){
+var AnimationFrame = require('animation-frame');
+AnimationFrame.shim();
+var elementClass = require('element-class');
+
+module.exports = {
+
+	prepareElement: function(element) {
+
+		// grab the text (as long as it doesn't have (&), (<), or (>) - see https://developer.mozilla.org/en-US/docs/Web/API/Element.innerHTML)
+		var text = element.innerHTML;
+
+		// split text into characters
+		var characters = text.split('');
+
+		var spans = '';
+
+		for (var i = 0; i < characters.length; i++) {
+
+			spans += '<span' + (characters[i] === ' ' ? ' class="whitespace"' : '') + '>' + characters[i] + '</span>';
+		}
+
+		element.innerHTML = spans;
+	},
+
+	prepare: function(selector) {
+
+		var elements = document.querySelectorAll(selector);
+
+		for (var i = 0; i < elements.length; i++) {
+			this.prepareElement(elements[i]);
+		}
+	},
+
+	toggleType: function(mode, selector, options) {
+
+		return new Promise(function(resolve, reject) {
+
+			var opts = {};
+			options = options || {};
+
+			// wait 10 ms before typing - not exactly sure why i have to do this :(
+			setTimeout(function() {
+
+				var children = document.querySelectorAll(selector + ' span');
+
+				if (mode === "untype") {
+
+					// reverse children
+					children = Array.prototype.slice.call(children).reverse();
+
+					// give 'show' class to all children immediately
+					for (var j = 0; j < children.length; j++) {
+						elementClass(children[j]).add('show');
+					}
+
+				}
+
+				// use delay if present,
+				// otherwise use duration if present,
+				// otherwise provide default delay
+				opts.delay = options.delay ? options.delay :
+					options.duration ? options.duration / children.length :
+					50;
+
+				var i = 0;
+				var rAF;
+
+				function typeCharacter() {
+
+					setTimeout(function() {
+
+						// TODO: options.duration doesn't really work
+						// atm it's limited by device refresh rate, e.g. 60
+						// rewrite this to look at time delta since last call
+						rAF = requestAnimationFrame(typeCharacter);
+
+						if (i < children.length) {
+
+							if (mode === "type") {
+								elementClass(children[i]).add('show');
+							} else {
+								elementClass(children[i]).remove('show');
+							}
+
+						} else {
+
+							cancelAnimationFrame(rAF);
+							resolve();
+						}
+
+						i++;
+
+					}, opts.delay);
+				}
+
+				typeCharacter();
+
+			}, 10);
+
+		});
+
+	},
+
+	type: function(selector, options) {
+
+		return this.toggleType('type', selector, options);
+	},
+
+	untype: function(selector, options) {
+
+		return this.toggleType('untype', selector, options);
+	}
+};
+
+},{"animation-frame":4,"element-class":11}]},{},[1]);

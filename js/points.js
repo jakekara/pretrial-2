@@ -1,5 +1,6 @@
 d3 = require("d3");
 const numeral = require("numeraljs");
+typewriter = require("typewriter-js");
 
 var point = function(val, description){
     this.factor = null;
@@ -20,6 +21,11 @@ var factor = function(headline, description){
 };
 
 exports.factor = factor;
+
+factor.prototype.randomize = function (){
+    this.select(this.points[Math.floor(Math.random() * this.points.length)]);
+    return this;
+}
 
 factor.prototype.add_to = function(inv){
     inv.add_factor(this);
@@ -83,7 +89,7 @@ inventory.prototype.generate_report = function(sel){
 	.classed("report-section", true);
 
     
-    summary.append("h3")
+    summary.append("h1")
 	.text("Risk score: " + numeral(this.score()).format("+0"));
 
     summary.append("div")
@@ -129,7 +135,7 @@ inventory.prototype.draw = function(){
 	target.classed("hidden", false);
 	target.style("margin-top", window.innerHeight + "px")
 	    .style("opacity",0);
-	target.transition().duration(500)
+	target.transition().duration(250)
 	    .style("margin-top", 0 + "px")
 	    .style("opacity", 1);
 	
@@ -163,7 +169,7 @@ inventory.prototype.draw = function(){
 	    return (i + 1) + "/" + num_factors;
 	})
     
-    factors.append("h3")
+    factors.append("h1")
 	.text(function(d){
 	    return d.headline;
 	});
@@ -266,3 +272,64 @@ inventory.prototype.draw = function(){
     return this;
 }
 
+inventory.prototype.randomize = function(){
+    this.factors.forEach(function(f){ f.randomize(); });
+    return this;
+}
+
+inventory.prototype.summary_graph = function(){
+    var rets = [];
+    this.factors.forEach(function(f, i){
+	rets.push(f.headline + ": " + f.selected.description);
+    });
+
+    return rets.join("; ");
+}
+
+inventory.prototype.display_summary = function(sel){
+    sel.html("");
+
+    var table = sel.append("table")
+    
+    var rows = table.selectAll("tr")
+	.data(this.factors)
+	.enter()
+	.append("tr")
+
+
+
+    var scores = rows.append("td")
+	.attr("data-factor", function(f, i){
+	    return i;
+	})
+	.html("  ")
+
+	.each(function(d, i){
+	    d3.select(this)
+		.classed("twval" + i, true)
+	    	.classed("typewriter-values", true);
+	});
+    
+    var desc = rows.append("td")
+	.html(function(f){
+	    return f.headline + ": " + f.selected.description;
+	})
+    	.each(function(d, i){
+	    d3.select(this)
+		.classed("typewriter", true)
+		.classed("tw" + i, true);
+	});
+
+
+    
+	//     typewriter.type('.tw' + i);
+	// });
+
+
+}
+
+inventory.prototype.guesser = function(sel){
+    sel.html("");
+    var container = sel.append("div")
+	.classed("slider_container");
+}

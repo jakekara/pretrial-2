@@ -1,6 +1,11 @@
 const d3 = require("d3");
+const numeral = require("numeraljs");
 const points = require("./points.js");
+const slider = require("./slider.js");
 
+
+var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
+var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 
 inventory = new points.inventory();
 
@@ -88,3 +93,229 @@ instrument = new points.factor("Dangerous instrument")
 
 inventory.container(d3.select("#container"));
 inventory.draw();
+
+var risk_color = function(d, i){
+    var colors = ["maroon","tomato","orange","gold","yellow","lightyellow",
+		  "white","aliceblue","lightskyblue",
+		  "palegreen","forestgreen","navy","purple"];
+    return colors[i];
+};
+
+// Version 2 -- challenge
+var go_challenge = function(fel, mis){
+
+    var guess_value = null;
+    d3.select("#container").html("");
+    var challenge = d3.select("#container")
+	.append("div").classed("summary", true);
+
+
+    var header_sel = challenge.append("h1")
+	.text("How risky is this defendant?")
+    var explainer_sel = challenge.append("div")
+	.classed("explainer", true)
+	.text("Try your hand at guessing how much of a 'flight risk' you think this randomly-generated defendant represents. Judicial branch employees use some of the factors below in their pretrial risk assessment scale, which is used to make recommendations for bail. Beware, some of these factors are not part of the risk assessment.");
+    var summary_sel = challenge.append("div");
+    inventory.randomize().display_summary(summary_sel);
+    typewriter.prepare(".typewriter");
+
+
+    // var svg_container = challenge.append("div")
+    // 	.style("width","100%");
+    
+    // var svg = svg_container.append("svg");    
+    var svg_slider = new slider.slider()
+	.values([-6, 6])
+	.radius(20)
+	.reverse(true)
+	.ticks(["Very low risk",
+		"",
+	       "Very high risk"])
+    
+    var slider_sel =  challenge.append("div");
+    var result_sel = challenge.append("div").classed("result_sel", true);
+
+    var submit_guess = function(){
+	if (d3.select(this).classed("enabled") == false) return;
+	svg_slider.enabled(false);
+	summary_sel
+	// .style("filter","blur(2px)") //
+	    .transition()
+	    .duration(500)
+	    .style("opacity",0.5);
+	slider_sel
+	    .style("opacity",0.5)
+	    // .style("filter","blur(3px)");
+	d3.select("#submit-button").classed("enabled", false);
+	d3.select("#guess-slider").attr("disabled", true);
+	// d3.select("#picker-svg").classed("enabled", false);
+
+	// guess_value = -1 * Number(d3.select("#guess-slider").node().value);
+	guess_value = Math.round(svg_slider.value());
+	
+	d3.selectAll("td[data-factor]")
+	    .text(function(d, i){
+		var factor_i = d3.select(this).attr("data-factor");
+		return numeral(inventory.factors[factor_i].selected.val)
+		    .format("+0");
+	    });
+
+	typewriter.prepare(".typewriter-values");
+	
+	var g = guess_value;
+	
+	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
+	var score = inventory.score();
+	if (score > 9) score = 9;
+	if (score < -9) score = -9;
+
+	var off_by = Math.abs( g - score);
+	var headline = "You were off by " + off_by + ". Here's what that means...";
+	if (off_by == 0)
+	    headine = "Correct!"
+	
+	msg += "The actuarial pretrial risk assessment score based on "
+	    + "the factors above would be " + numeral(score).format("+0") + ".";
+	result_sel.append("h1")
+	    .text(headline);
+	result_sel.append("div").classed("explainer", true).text(msg);
+
+    }
+    
+    var add_slider = function(sel){
+
+	// var svg_height = 40;
+
+	var guess_display = sel.append("h1")
+	    .text("Your guess");
+
+	sel.append("div")
+	    .classed("explainer", true)
+	    .text("Set the slider to indicate your guess of this defendant's"
+		   + " risk score. From left to right, the slider ranges from"
+		   + " least to most risk.");
+	
+	var svg_container = sel.append("div")
+	    .style("width","100%");
+	
+	var svg = svg_container.append("svg");    
+
+	svg_slider.svg(svg)
+	    .draw();
+
+	// var slider = sel.append("input")
+	//     .attr("id","guess-slider")
+	//     .attr("type","range")
+	//     .attr("min",-6)
+	//     .attr("max",6);
+	// slider.node().value = 0;
+	
+	// var svg = sel.append("svg")
+	//     .attr("id","picker-svg")
+	//     .style("height", svg_height + "px")
+	//     .style("border","1px solid gray")
+	//     .classed("enabled", true)
+	//     .style("width", sel.node().getBoundingClientRect().width);
+
+	var submit = sel.append("div")
+	    .append("div")
+	    .classed("fake-button-container", true)
+	    .append("div")
+	    .classed("fake-button", true)
+	    .attr("id","submit-button")
+	    .classed("enabled", true)
+	    .text("Guess")
+	    .on("click", submit_guess);
+
+	sel.append("div").classed("clear-both", true)
+	
+	// var bbox = svg.node().getBoundingClientRect();
+	
+	// var hor_padding = 10;
+	// var radius = 10;
+	// var val_range = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6].reverse();
+	// var scale = d3.scaleLinear()
+	//     .domain([val_range[0],val_range.reverse()[0]])
+	//     .range([hor_padding, bbox.width - hor_padding])
+
+	// var scale_inv = d3.scaleLinear()
+	//     .domain([hor_padding, bbox.width - hor_padding])
+	//     .range(val_range);
+
+	// var box_count = 13;
+	// var box_width = bbox.width / box_count;
+
+	var guess = function(d, i){
+
+	    // if (svg.classed("enabled") == false) return;
+	    
+	    // svg.selectAll("rect.box")
+	    // 	.classed("selected", false);
+
+	    d3.select(this).classed("selected", true);
+
+	    guess_value = d3.select(this).attr("data-val");
+
+	    submit.classed("enabled", true);
+
+	}
+	
+	// svg.selectAll("rect.box")
+	//     .data(val_range)
+	//     .enter()
+	//     .append("rect")
+	//     .classed("box", true)
+	//     .attr("x",function(d, i){
+	// 	return i * box_width;
+	//     })
+	//     .attr("y", 0)
+	//     .attr("width",box_width)
+	//     .attr("height",svg_height)
+	//     .attr("data-val", function(d){ return d; })
+	//     .style("fill", risk_color)
+	//     .style("strok-width","0px")
+	//     .on("click", guess);
+	
+	
+
+    }
+
+    var example_offense = function(off_type, off_class){
+	if (off_type.toLowerCase() == "felony")
+	    var sheet = fel;
+	else if (off_type.toLowerCase() == "misdemeanor")
+	    var sheet = mis;
+
+	var options = sheet.filter(function(a){
+	    return a["class"].toUpperCase() == off_class.toUpperCase();
+	});
+
+
+	return options[Math.random() * options.length];
+    }
+
+
+    var type_across = function(i) {
+	if (i >= inventory.factors.length) return;
+	
+	typewriter.type(".tw" + i,{duration: 250})
+	    .then(function(){type_across(i + 1);});
+    }
+
+    
+    type_across(0);
+    
+    add_slider(slider_sel);
+
+}
+
+
+d3.json(felony_url, function(fel){
+    console.log("felonies", fel);
+    d3.json(misd_url, function(mis){
+	console.log("misdemeanors", mis);
+	go_challenge(fel, mis);
+    });
+});
+
+			      
