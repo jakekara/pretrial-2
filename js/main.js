@@ -91,8 +91,8 @@ instrument = new points.factor("Dangerous instrument")
     .add_point(-2, "Dangerous instrument involved")
     .add_to(inventory);
 
-inventory.container(d3.select("#container"));
-inventory.draw();
+// inventory.container(d3.select("#container"));
+// inventory.draw();
 
 var risk_color = function(d, i){
     var colors = ["maroon","tomato","orange","gold","yellow","lightyellow",
@@ -188,13 +188,13 @@ var go_challenge = function(fel, mis){
 	var score = inventory.score();
 	if (score > 9) score = 9;
 	if (score < -9) score = -9;
-
+	score = Math.round(score);
 	var off_by = Math.round(Math.abs( g - score));
 	if (g < score)
 	    var over_under = "overestimated";
-	if (g > score)
+	else if (g > score)
 	    var over_under = "underestimated";
-	else
+	else if (g == score)
 	    var over_under = "correctly estimated";
 	   
 	var headline = "You " + over_under + " this defendant's FTA risk";
