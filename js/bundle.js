@@ -316,11 +316,11 @@ var go_challenge = function(fel, mis){
 	
 	var g = guess_value;
 	
-	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
 	var score = inventory.score();
 	if (score > 9) score = 9;
 	if (score < -9) score = -9;
 	score = Math.round(score);
+	g = Math.round(g);
 	var off_by = Math.round(Math.abs( g - score));
 	if (g < score)
 	    var over_under = "overestimated";
@@ -335,6 +335,7 @@ var go_challenge = function(fel, mis){
 	
 	if (off_by == 0)
 	    headine = "Correct!"
+	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
 	
 	msg += "The actuarial pretrial risk assessment score based on "
 	    + "the factors above would be " + numeral(score).format("+0") + ".";
