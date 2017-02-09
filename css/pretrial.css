@@ -120,7 +120,8 @@ svg rect.box.selected {
   opacity: 1; }
 
 .fake-button.enabled:hover {
-  background-color: palegreen; }
+  background-color: palegreen;
+  box-shadow: 2px 2px 4px lightgray; }
 
 #guess-slider {
   width: 100%; }

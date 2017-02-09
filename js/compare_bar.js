@@ -2,7 +2,7 @@ const d3 = require("d3");
 
 var bar = function(){
     this.__markers = [];
-    this.__height = 20;
+    this.__height = 40;
     this.__font_height = 14;
     return this;
 };

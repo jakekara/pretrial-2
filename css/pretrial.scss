@@ -141,6 +141,7 @@ svg rect.box.selected{
     border: 1px solid gray;
     border-radius: 9px;
     opacity: 0.3;
+
 }
 
 .fake-button.enabled {
@@ -150,6 +151,8 @@ svg rect.box.selected{
 
 .fake-button.enabled:hover{
     background-color: palegreen;
+    box-shadow: 2px 2px 4px lightgray;
+
 }
 
 #guess-slider{
