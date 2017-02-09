@@ -110,7 +110,7 @@ svg rect.box.selected {
   text-align: center;
   display: inline-block;
   padding: 10px;
-  background-color: lightgray;
+  background-color: lightgoldenrodyellow;
   border: 1px solid gray;
   border-radius: 9px;
   opacity: 0.1; }
@@ -120,8 +120,7 @@ svg rect.box.selected {
   opacity: 1; }
 
 .fake-button.enabled:hover {
-  background-color: gray;
-  color: white; }
+  background-color: palegreen; }
 
 #guess-slider {
   width: 100%; }
@@ -134,5 +133,9 @@ svg rect.box.selected {
 
 .tick line {
   opacity: 0; }
+
+svg circle {
+  stroke: gray;
+  fill: palegreen; }
 
 /*# sourceMappingURL=pretrial.css.map */
