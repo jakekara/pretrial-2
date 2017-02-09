@@ -23,6 +23,8 @@ slider.prototype.max_val = function(){
 
 slider.prototype.value = function(v){
     if (typeof(v) == "undefined") return this.__value;
+    var v = Math.min(v, d3.max(this.values()));
+    var v = Math.max(v, d3.min(this.values()));
     this.__value = v;
     return this;
 }
@@ -112,9 +114,9 @@ slider.prototype.knob_move_to = function(val){
 slider.prototype.knob_make_draggable = function(){
     var that = this;
     var drag_end = function(){
-	console.log("enabled: " , that.enabled());
 	if (that.enabled() == false) return;
 	that.value(that.iscale()(d3.event.x));
+	console.log("set value to ", that.value());
     }
 
     var drag_drag = function(){
@@ -160,6 +162,7 @@ slider.prototype.draw = function(){
     this.svg().html("");
     this.svg().attr("width",
 		    this.svg().node().parentNode.getBoundingClientRect().width);
+
     var container = this.svg().append("g");
     
     container.append("g")

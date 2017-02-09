@@ -2,7 +2,7 @@ const d3 = require("d3");
 const numeral = require("numeraljs");
 const points = require("./points.js");
 const slider = require("./slider.js");
-
+const bar = require("./compare_bar.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
@@ -115,17 +115,26 @@ var go_challenge = function(fel, mis){
     var explainer_sel = challenge.append("div")
 	.classed("explainer", true)
 	.text("Try your hand at guessing how much of a 'flight risk' you think this randomly-generated defendant represents. Judicial branch employees use some of the factors below in their pretrial risk assessment scale, which is used to make recommendations for bail. Beware, some of these factors are not part of the risk assessment.");
+
+    var got_it = challenge.append("div")
+	.append("div")
+	.classed("fake-button-container", true)
+	.append("div")
+	.classed("fake-button", true)
+	.attr("id","submit-button")
+	.classed("enabled", true)
+	.text("Got it");
+    
     var summary_sel = challenge.append("div");
     inventory.randomize().display_summary(summary_sel);
     typewriter.prepare(".typewriter");
-
 
     // var svg_container = challenge.append("div")
     // 	.style("width","100%");
     
     // var svg = svg_container.append("svg");    
     var svg_slider = new slider.slider()
-	.values([-6, 6])
+	.values([-9, 9])
 	.radius(20)
 	.reverse(true)
 	.ticks(["Very low risk",
@@ -136,18 +145,29 @@ var go_challenge = function(fel, mis){
     var result_sel = challenge.append("div").classed("result_sel", true);
 
     var submit_guess = function(){
+	
 	if (d3.select(this).classed("enabled") == false) return;
+	
 	svg_slider.enabled(false);
+	
 	summary_sel
 	// .style("filter","blur(2px)") //
 	    .transition()
 	    .duration(500)
-	    .style("opacity",0.5);
+	    .style("opacity",0.75);
 	slider_sel
-	    .style("opacity",0.5)
+	    .transition()
+	    .duration(250)
+	    .style("opacity",0)
+	    .style("height", "0px");
+
+	setTimeout(function(){
+	    slider_sel.style("display","none");
+	}, 250);
 	    // .style("filter","blur(3px)");
 	d3.select("#submit-button").classed("enabled", false);
 	d3.select("#guess-slider").attr("disabled", true);
+	
 	// d3.select("#picker-svg").classed("enabled", false);
 
 	// guess_value = -1 * Number(d3.select("#guess-slider").node().value);
@@ -169,8 +189,18 @@ var go_challenge = function(fel, mis){
 	if (score > 9) score = 9;
 	if (score < -9) score = -9;
 
-	var off_by = Math.abs( g - score);
-	var headline = "You were off by " + off_by + ". Here's what that means...";
+	var off_by = Math.round(Math.abs( g - score));
+	if (g < score)
+	    var over_under = "overestimated";
+	if (g > score)
+	    var over_under = "underestimated";
+	else
+	    var over_under = "correctly estimated";
+	   
+	var headline = "You " + over_under + " this defendant's FTA risk";
+
+	console.log("off_by", off_by);
+	
 	if (off_by == 0)
 	    headine = "Correct!"
 	
@@ -179,6 +209,19 @@ var go_challenge = function(fel, mis){
 	result_sel.append("h1")
 	    .text(headline);
 	result_sel.append("div").classed("explainer", true).text(msg);
+
+	var line_cont = result_sel
+	    .append("div")
+	    .style("width", "100%");
+
+	var compline = new bar.bar()
+	    .container(line_cont)
+	    .values([9,-9])
+	    .add_marker(new bar.marker(g, "Your guess").bottom(true))
+	    .add_marker(new bar.marker(score, "Actual score"))
+	    .draw();
+
+	console.log(compline);
 
     }
     
@@ -302,8 +345,20 @@ var go_challenge = function(fel, mis){
 	    .then(function(){type_across(i + 1);});
     }
 
-    
-    type_across(0);
+    summary_sel.style("display","none");
+    slider_sel.style("visibility","hidden")
+	.style("height","0px");
+
+    got_it.on("click", function(){
+	got_it.transition().duration(250)
+	    .style("opacity",0)
+	    .style("height","0px");
+	setTimeout(function(){got_it.style("display","none");},100);
+	summary_sel.style("display",null);
+	slider_sel.style("visibility","visible")
+	    .style("height",null);
+	type_across(0);
+    });
     
     add_slider(slider_sel);
 

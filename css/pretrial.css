@@ -113,7 +113,7 @@ svg rect.box.selected {
   background-color: lightgoldenrodyellow;
   border: 1px solid gray;
   border-radius: 9px;
-  opacity: 0.1; }
+  opacity: 0.3; }
 
 .fake-button.enabled {
   cursor: pointer;

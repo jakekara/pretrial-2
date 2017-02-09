@@ -1,9 +1,140 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 const d3 = require("d3");
+
+var bar = function(){
+    this.__markers = [];
+    this.__height = 20;
+    this.__font_height = 14;
+    return this;
+};
+
+exports.bar = bar;
+
+bar.prototype.container = function(sel){
+    if (typeof(sel) == "undefined") return this.d3selection;
+
+    this.d3selection = sel;
+    return this;
+}
+
+bar.prototype.values = function(arr){
+    if (typeof(arr) == "undefined") return this.__values;
+    this.__values = arr;
+    return this;
+}
+
+bar.prototype.add_marker = function(m){
+    if (typeof(m) == "undefined") return;
+    this.__markers.push(m);
+    return this;
+}
+
+marker = function(val, label){
+    this.__val = val;
+    this.__label = label;
+    this.__bottom = false;
+    return this;
+}
+
+marker.prototype.bottom = function (v){
+    if (typeof(v) == "undefined") return this.__bottom;
+    this.__bottom = v;
+    return this;
+}
+    
+
+exports.marker = marker;
+
+bar.prototype.height = function(h){
+    if (typeof(h) == "undefined") return this.__height + this.__font_height * 2;
+    this.__height = h;
+    return this;
+}
+
+bar.prototype.draw = function(){
+    
+    this.d3selection.html("");
+    
+    var width = this.d3selection.node().getBoundingClientRect().width;
+
+    var svg_outer = this.d3selection.append("svg")
+    	.style("width",width + "px")
+	.style("height", this.height() + "px")
+
+    var svg = svg_outer.append("g");
+
+    var x1 = 0;
+    var x2 = width;
+    var y1 = this.height() / 2;
+    var y2 = y1;
+    
+    var line = svg.append("line")
+	.attr("x1",x1)
+	.attr("x2",x2)
+	.attr("y1",y1)
+	.attr("y2",y2)
+	.style("stroke","lightgray")
+	.style("stroke-width",2);
+
+    var xscale = d3.scaleLinear()
+	.domain(this.values())
+	.range([10, width - 1]);
+
+    var height = this.height();
+    var that = this;
+    this.__markers.forEach(function(m, i){
+
+	console.log(m, m.__val);
+
+	var y_padding = 3;
+	
+	var x1 = xscale(m.__val);
+	var x2 = x1;
+	var y1 = that.__font_height + y_padding;
+	var y2 = height - that.__font_height - y_padding;
+
+	console.log(x1, y1, x2, y2);
+	var colors = ["tomato","lightskyblue"];
+
+	svg.append("line")
+	    .attr("x1",x1)
+	    .attr("x2",x2)
+	    .attr("y1",y1)
+	    .attr("y2",y2)
+	    .style("stroke",colors[i])
+	    .style("stroke-width",5);
+
+	var label = svg.append("text")
+	    .attr("y",that.__font_height)
+	    .style("font-size", that.__font_height)
+	    .text(m.__label);
+
+	var label_width = label.node().getBBox().width;
+
+	var label_x = x1 - label_width / 2
+	label_x = Math.max(0, label_x);
+	label_x = Math.min(width - label_width, label_x);
+	console.log("label_x", label_x);
+	label.attr("x", label_x);
+
+	if (m.__bottom == true){
+	    label.attr("y", height - y_padding);
+	}
+
+	svg_outer.attr("height", (svg.node().getBBox().height
+				  + svg.node().getBBox().y)
+		       + "px");
+	
+    });
+    
+}
+
+},{"d3":11}],2:[function(require,module,exports){
+const d3 = require("d3");
 const numeral = require("numeraljs");
 const points = require("./points.js");
 const slider = require("./slider.js");
-
+const bar = require("./compare_bar.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
@@ -116,17 +247,26 @@ var go_challenge = function(fel, mis){
     var explainer_sel = challenge.append("div")
 	.classed("explainer", true)
 	.text("Try your hand at guessing how much of a 'flight risk' you think this randomly-generated defendant represents. Judicial branch employees use some of the factors below in their pretrial risk assessment scale, which is used to make recommendations for bail. Beware, some of these factors are not part of the risk assessment.");
+
+    var got_it = challenge.append("div")
+	.append("div")
+	.classed("fake-button-container", true)
+	.append("div")
+	.classed("fake-button", true)
+	.attr("id","submit-button")
+	.classed("enabled", true)
+	.text("Got it");
+    
     var summary_sel = challenge.append("div");
     inventory.randomize().display_summary(summary_sel);
     typewriter.prepare(".typewriter");
-
 
     // var svg_container = challenge.append("div")
     // 	.style("width","100%");
     
     // var svg = svg_container.append("svg");    
     var svg_slider = new slider.slider()
-	.values([-6, 6])
+	.values([-9, 9])
 	.radius(20)
 	.reverse(true)
 	.ticks(["Very low risk",
@@ -137,18 +277,29 @@ var go_challenge = function(fel, mis){
     var result_sel = challenge.append("div").classed("result_sel", true);
 
     var submit_guess = function(){
+	
 	if (d3.select(this).classed("enabled") == false) return;
+	
 	svg_slider.enabled(false);
+	
 	summary_sel
 	// .style("filter","blur(2px)") //
 	    .transition()
 	    .duration(500)
-	    .style("opacity",0.5);
+	    .style("opacity",0.75);
 	slider_sel
-	    .style("opacity",0.5)
+	    .transition()
+	    .duration(250)
+	    .style("opacity",0)
+	    .style("height", "0px");
+
+	setTimeout(function(){
+	    slider_sel.style("display","none");
+	}, 250);
 	    // .style("filter","blur(3px)");
 	d3.select("#submit-button").classed("enabled", false);
 	d3.select("#guess-slider").attr("disabled", true);
+	
 	// d3.select("#picker-svg").classed("enabled", false);
 
 	// guess_value = -1 * Number(d3.select("#guess-slider").node().value);
@@ -170,8 +321,18 @@ var go_challenge = function(fel, mis){
 	if (score > 9) score = 9;
 	if (score < -9) score = -9;
 
-	var off_by = Math.abs( g - score);
-	var headline = "You were off by " + off_by + ". Here's what that means...";
+	var off_by = Math.round(Math.abs( g - score));
+	if (g < score)
+	    var over_under = "overestimated";
+	if (g > score)
+	    var over_under = "underestimated";
+	else
+	    var over_under = "correctly estimated";
+	   
+	var headline = "You " + over_under + " this defendant's FTA risk";
+
+	console.log("off_by", off_by);
+	
 	if (off_by == 0)
 	    headine = "Correct!"
 	
@@ -180,6 +341,19 @@ var go_challenge = function(fel, mis){
 	result_sel.append("h1")
 	    .text(headline);
 	result_sel.append("div").classed("explainer", true).text(msg);
+
+	var line_cont = result_sel
+	    .append("div")
+	    .style("width", "100%");
+
+	var compline = new bar.bar()
+	    .container(line_cont)
+	    .values([9,-9])
+	    .add_marker(new bar.marker(g, "Your guess").bottom(true))
+	    .add_marker(new bar.marker(score, "Actual score"))
+	    .draw();
+
+	console.log(compline);
 
     }
     
@@ -303,8 +477,20 @@ var go_challenge = function(fel, mis){
 	    .then(function(){type_across(i + 1);});
     }
 
-    
-    type_across(0);
+    summary_sel.style("display","none");
+    slider_sel.style("visibility","hidden")
+	.style("height","0px");
+
+    got_it.on("click", function(){
+	got_it.transition().duration(250)
+	    .style("opacity",0)
+	    .style("height","0px");
+	setTimeout(function(){got_it.style("display","none");},100);
+	summary_sel.style("display",null);
+	slider_sel.style("visibility","visible")
+	    .style("height",null);
+	type_across(0);
+    });
     
     add_slider(slider_sel);
 
@@ -321,7 +507,7 @@ d3.json(felony_url, function(fel){
 
 			      
 
-},{"./points.js":2,"./slider.js":3,"d3":10,"numeraljs":12}],2:[function(require,module,exports){
+},{"./compare_bar.js":1,"./points.js":3,"./slider.js":4,"d3":11,"numeraljs":13}],3:[function(require,module,exports){
 d3 = require("d3");
 const numeral = require("numeraljs");
 typewriter = require("typewriter-js");
@@ -658,7 +844,7 @@ inventory.prototype.guesser = function(sel){
 	.classed("slider_container");
 }
 
-},{"d3":10,"numeraljs":12,"typewriter-js":13}],3:[function(require,module,exports){
+},{"d3":11,"numeraljs":13,"typewriter-js":14}],4:[function(require,module,exports){
 var slider = function(){
     this.__enabled = true;
     this.__radius = 10;
@@ -684,6 +870,8 @@ slider.prototype.max_val = function(){
 
 slider.prototype.value = function(v){
     if (typeof(v) == "undefined") return this.__value;
+    var v = Math.min(v, d3.max(this.values()));
+    var v = Math.max(v, d3.min(this.values()));
     this.__value = v;
     return this;
 }
@@ -773,9 +961,9 @@ slider.prototype.knob_move_to = function(val){
 slider.prototype.knob_make_draggable = function(){
     var that = this;
     var drag_end = function(){
-	console.log("enabled: " , that.enabled());
 	if (that.enabled() == false) return;
 	that.value(that.iscale()(d3.event.x));
+	console.log("set value to ", that.value());
     }
 
     var drag_drag = function(){
@@ -821,6 +1009,7 @@ slider.prototype.draw = function(){
     this.svg().html("");
     this.svg().attr("width",
 		    this.svg().node().parentNode.getBoundingClientRect().width);
+
     var container = this.svg().append("g");
     
     container.append("g")
@@ -846,7 +1035,7 @@ slider.prototype.draw = function(){
     return this;
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * An even better animation frame.
  *
@@ -857,7 +1046,7 @@ slider.prototype.draw = function(){
 
 module.exports = require('./lib/animation-frame')
 
-},{"./lib/animation-frame":5}],5:[function(require,module,exports){
+},{"./lib/animation-frame":6}],6:[function(require,module,exports){
 'use strict'
 
 var nativeImpl = require('./native')
@@ -990,7 +1179,7 @@ AnimationFrame.prototype.cancel = function(id) {
     delete this._callbacks[id]
 }
 
-},{"./native":6,"./now":7,"./performance":9}],6:[function(require,module,exports){
+},{"./native":7,"./now":8,"./performance":10}],7:[function(require,module,exports){
 'use strict'
 
 var global = window
@@ -1026,7 +1215,7 @@ if (exports.request) {
     });
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict'
 
 /**
@@ -1039,7 +1228,7 @@ module.exports = Date.now || function() {
     return (new Date).getTime()
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict'
 
 var now = require('./now')
@@ -1055,7 +1244,7 @@ var now = require('./now')
  */
 exports.navigationStart = now()
 
-},{"./now":7}],9:[function(require,module,exports){
+},{"./now":8}],10:[function(require,module,exports){
 'use strict'
 
 var now = require('./now')
@@ -1075,7 +1264,7 @@ exports.now = function () {
 }
 
 
-},{"./now":7,"./performance-timing":8}],10:[function(require,module,exports){
+},{"./now":8,"./performance-timing":9}],11:[function(require,module,exports){
 // https://d3js.org Version 4.5.0. Copyright 2017 Mike Bostock.
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -17482,7 +17671,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 module.exports = function(opts) {
   return new ElementClass(opts)
 }
@@ -17543,7 +17732,7 @@ ElementClass.prototype.toggle = function(className) {
   else this.add(className)
 }
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*!
  * numeral.js
  * version : 1.5.6
@@ -18224,7 +18413,7 @@ ElementClass.prototype.toggle = function(className) {
     }
 }).call(this);
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var AnimationFrame = require('animation-frame');
 AnimationFrame.shim();
 var elementClass = require('element-class');
@@ -18339,4 +18528,4 @@ module.exports = {
 	}
 };
 
-},{"animation-frame":4,"element-class":11}]},{},[1]);
+},{"animation-frame":5,"element-class":12}]},{},[2]);
