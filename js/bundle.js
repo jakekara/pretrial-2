@@ -128,12 +128,13 @@ bar.prototype.draw = function(){
     });
 }
 
-},{"d3":11}],2:[function(require,module,exports){
+},{"d3":12}],2:[function(require,module,exports){
 const d3 = require("d3");
 const numeral = require("numeraljs");
 const points = require("./points.js");
 const slider = require("./slider.js");
 const bar = require("./compare_bar.js");
+wiggler = require("./wiggle.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
@@ -345,6 +346,8 @@ var go_challenge = function(fel, mis, amts){
 	.classed("enabled", true)
 	.text("OK, go");
 
+    new wiggler.wiggler(got_it).dance_party();
+
     var summary_sel = challenge.append("div");
 
     inventory.randomize(); 		    // generate random scenario
@@ -478,8 +481,6 @@ var go_challenge = function(fel, mis, amts){
 		 b_versus_b += " versus " + real_bail;
 	    result_sel.append("h1")
 		.text(b_versus_b);
-
-	    
 	    
 	    var line_cont = result_sel
 		.append("div")
@@ -594,7 +595,7 @@ d3.json(felony_url, function(fel){
 
 
 
-},{"./compare_bar.js":1,"./points.js":3,"./slider.js":4,"d3":11,"numeraljs":13}],3:[function(require,module,exports){
+},{"./compare_bar.js":1,"./points.js":3,"./slider.js":4,"./wiggle.js":5,"d3":12,"numeraljs":14}],3:[function(require,module,exports){
 d3 = require("d3");
 const numeral = require("numeraljs");
 typewriter = require("typewriter-js");
@@ -926,7 +927,7 @@ inventory.prototype.guesser = function(sel){
 	.classed("slider_container");
 }
 
-},{"d3":11,"numeraljs":13,"typewriter-js":14}],4:[function(require,module,exports){
+},{"d3":12,"numeraljs":14,"typewriter-js":15}],4:[function(require,module,exports){
 var slider = function(){
     this.__enabled = true;
     this.__radius = 10;
@@ -1118,6 +1119,86 @@ slider.prototype.draw = function(){
 }
 
 },{}],5:[function(require,module,exports){
+var wiggler = function(sel){
+    this.d3selection = sel;
+    this.__auto = true;
+    this.__degree = 5;
+    this.__duration = (250);
+    this.__frequency = 1000 * 5;
+    this.__ease = d3.easeCubicIn;
+    return this;
+}
+
+exports.wiggler = wiggler;
+
+wiggler.prototype.n_to_degs = function(n){
+    return n + "deg"
+}
+
+wiggler.prototype.reset = function(){
+
+    return this.wiggle_to(0);
+}
+
+wiggler.prototype.wiggle_to = function(n){
+
+    var tfunc = this.d3selection.style("transform");
+    
+    tfunc = "rotate(" + this.n_to_degs(n) + ")";
+
+    return this.d3selection
+	.transition()
+	.duration(this.__duration)
+	.ease(this.__ease)
+	.style("transform", tfunc);
+}
+
+wiggler.prototype.twist_to = function(n){
+
+    var that = this;
+    return this.wiggle_to(n)
+	.on("end", function(){
+	    that.wiggle_to(-1 * n)
+		.on("end", function(){
+		    that.reset();
+		});
+	});
+}
+
+wiggler.prototype.dance = function(){
+    return this.twist_to(this.__degree);
+}
+
+wiggler.prototype.spin = function(){
+
+    var that = this;
+    return this.wiggle_to(180)
+	.on("end", function(){
+	    that.reset();
+	});
+}
+
+wiggler.prototype.loop = function(f){
+    clearInterval(this.__interval);
+    this.__interval = setInterval(f, this.__frequency);
+    return this;
+}
+
+wiggler.prototype.spin_cycle = function(){
+    var that = this;
+    return this.loop(function(){
+	that.spin();
+    });
+}
+
+wiggler.prototype.dance_party = function(){
+    var that = this;
+    return this.loop(function(){
+	that.dance();
+    });
+}
+
+},{}],6:[function(require,module,exports){
 /**
  * An even better animation frame.
  *
@@ -1128,7 +1209,7 @@ slider.prototype.draw = function(){
 
 module.exports = require('./lib/animation-frame')
 
-},{"./lib/animation-frame":6}],6:[function(require,module,exports){
+},{"./lib/animation-frame":7}],7:[function(require,module,exports){
 'use strict'
 
 var nativeImpl = require('./native')
@@ -1261,7 +1342,7 @@ AnimationFrame.prototype.cancel = function(id) {
     delete this._callbacks[id]
 }
 
-},{"./native":7,"./now":8,"./performance":10}],7:[function(require,module,exports){
+},{"./native":8,"./now":9,"./performance":11}],8:[function(require,module,exports){
 'use strict'
 
 var global = window
@@ -1297,7 +1378,7 @@ if (exports.request) {
     });
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict'
 
 /**
@@ -1310,7 +1391,7 @@ module.exports = Date.now || function() {
     return (new Date).getTime()
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict'
 
 var now = require('./now')
@@ -1326,7 +1407,7 @@ var now = require('./now')
  */
 exports.navigationStart = now()
 
-},{"./now":8}],10:[function(require,module,exports){
+},{"./now":9}],11:[function(require,module,exports){
 'use strict'
 
 var now = require('./now')
@@ -1346,7 +1427,7 @@ exports.now = function () {
 }
 
 
-},{"./now":8,"./performance-timing":9}],11:[function(require,module,exports){
+},{"./now":9,"./performance-timing":10}],12:[function(require,module,exports){
 // https://d3js.org Version 4.5.0. Copyright 2017 Mike Bostock.
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -17753,7 +17834,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = function(opts) {
   return new ElementClass(opts)
 }
@@ -17814,7 +17895,7 @@ ElementClass.prototype.toggle = function(className) {
   else this.add(className)
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /*!
  * numeral.js
  * version : 1.5.6
@@ -18495,7 +18576,7 @@ ElementClass.prototype.toggle = function(className) {
     }
 }).call(this);
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var AnimationFrame = require('animation-frame');
 AnimationFrame.shim();
 var elementClass = require('element-class');
@@ -18610,4 +18691,4 @@ module.exports = {
 	}
 };
 
-},{"animation-frame":5,"element-class":12}]},{},[2]);
+},{"animation-frame":6,"element-class":13}]},{},[2]);

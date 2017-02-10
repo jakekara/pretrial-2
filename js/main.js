@@ -3,6 +3,7 @@ const numeral = require("numeraljs");
 const points = require("./points.js");
 const slider = require("./slider.js");
 const bar = require("./compare_bar.js");
+wiggler = require("./wiggle.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
@@ -213,6 +214,8 @@ var go_challenge = function(fel, mis, amts){
 	.attr("id","submit-button")
 	.classed("enabled", true)
 	.text("OK, go");
+
+    new wiggler.wiggler(got_it).dance_party();
 
     var summary_sel = challenge.append("div");
 
