@@ -6,7 +6,7 @@ const bar = require("./compare_bar.js");
 wiggler = require("./wiggle.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
-var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
+var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/misdemeanor-examples.json";
 var bond_url = "https://cdn.rawgit.com/trendct-data/ct-penal-code/6f75c329/data/bond_amount_table.tsv"
 
 inventory = new points.inventory();

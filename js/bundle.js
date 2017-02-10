@@ -137,7 +137,7 @@ const bar = require("./compare_bar.js");
 wiggler = require("./wiggle.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
-var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
+var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/misdemeanor-examples.json";
 var bond_url = "https://cdn.rawgit.com/trendct-data/ct-penal-code/6f75c329/data/bond_amount_table.tsv"
 
 inventory = new points.inventory();
@@ -1119,6 +1119,8 @@ slider.prototype.draw = function(){
 }
 
 },{}],5:[function(require,module,exports){
+var d3 = require("d3");
+
 var wiggler = function(sel){
     this.d3selection = sel;
     this.__auto = true;
@@ -1198,7 +1200,7 @@ wiggler.prototype.dance_party = function(){
     });
 }
 
-},{}],6:[function(require,module,exports){
+},{"d3":12}],6:[function(require,module,exports){
 /**
  * An even better animation frame.
  *

@@ -1,3 +1,5 @@
+var d3 = require("d3");
+
 var wiggler = function(sel){
     this.d3selection = sel;
     this.__auto = true;
