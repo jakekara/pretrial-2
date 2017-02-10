@@ -347,9 +347,16 @@ var go_challenge = function(fel, mis, amts){
 
 	    var b_versus_b = your_bail
 	    if (your_bail != real_bail)
-		 b_versus_b += " versus " + real_bail;
+		b_versus_b += " versus " + real_bail;
+
+	    var capitalize = function(s){
+		return s[0].toUpperCase() + s.slice(1);
+	    };
+
+	    
+	    
 	    result_sel.append("h1")
-		.text(b_versus_b);
+		.text(capitalize(b_versus_b));
 
 
 	    var diff_text = "That's the difference in recommended bond amounts based on your score and the real one.";
