@@ -346,7 +346,8 @@ var go_challenge = function(fel, mis, amts){
 	.classed("enabled", true)
 	.text("OK, go");
 
-    new wiggler.wiggler(got_it).dance_party();
+    var w = new wiggler.wiggler(got_it)
+	.frequency(2* 1000).dance_party(5);
 
     var summary_sel = challenge.append("div");
 
@@ -1225,8 +1226,13 @@ wiggler.prototype.spin = function(){
 	});
 }
 
-wiggler.prototype.loop = function(f){
+wiggler.prototype.stop = function(){
     clearInterval(this.__interval);
+    return this;
+}
+
+wiggler.prototype.loop = function(f){
+    this.stop();
     this.__interval = setInterval(f, this.__frequency);
     return this;
 }
@@ -1238,11 +1244,23 @@ wiggler.prototype.spin_cycle = function(){
     });
 }
 
-wiggler.prototype.dance_party = function(){
+wiggler.prototype.frequency = function(f){
+    if (typeof(f) == "undefined") return this.__frequency;
+    this.__frequency = f;
+
+    return this;
+}
+
+wiggler.prototype.dance_party = function(delay){
+    var delay = delay || 0;
+
     var that = this;
-    return this.loop(function(){
-	that.dance();
-    });
+
+    setTimeout(function(){
+	return that.loop(function(){
+	    that.dance();
+	});
+    }, delay);
 }
 
 },{"d3":12}],6:[function(require,module,exports){
