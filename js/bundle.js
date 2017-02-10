@@ -499,7 +499,7 @@ var go_challenge = function(fel, mis, amts){
 	    if (your_bail == real_bail)
 		diff_text = "That's the bail recommendation based on the defendant's risk assessment score.";
 		
-	    diff_text += " When a financial bail is recommended, the recommended dollar amount comes from a preset table of bond amounts. While the risk score has been validated as a predictor of flight risk, there is no real science behind the dollar value of the financial bond amounts. Ultimately this recommendation is one of the elements a judge considers when setting a bond amount.";
+	    diff_text += " When a financial bail is recommended, the recommended dollar amount comes from a preset table of bond amounts. While the risk score has been validated as a predictor of flight risk, there is no real science behind the dollar value of the financial bond amounts. Ultimately this recommendation is one of the elements a judge considers when setting bail.";
 	    
 	    result_sel.append("div")
 		.classed("explainer", true)
