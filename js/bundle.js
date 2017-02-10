@@ -84,8 +84,6 @@ bar.prototype.draw = function(){
     var that = this;
     this.__markers.forEach(function(m, i){
 
-	console.log(m, m.__val);
-
 	var y_padding = 3;
 	
 	var x1 = xscale(m.__val);
@@ -93,7 +91,6 @@ bar.prototype.draw = function(){
 	var y1 = that.__font_height + y_padding;
 	var y2 = height - that.__font_height - y_padding;
 
-	console.log(x1, y1, x2, y2);
 	var colors = ["tomato","lightskyblue"];
 
 	svg.append("line")
@@ -114,7 +111,6 @@ bar.prototype.draw = function(){
 	var label_x = x1 - label_width / 2
 	label_x = Math.max(0, label_x);
 	label_x = Math.min(width - label_width, label_x);
-	console.log("label_x", label_x);
 	label.attr("x", label_x);
 
 	if (m.__bottom == true){
@@ -126,7 +122,10 @@ bar.prototype.draw = function(){
 		       + "px");
 	
     });
-    
+
+    d3.select(window).on("resize", function(){
+	that.draw.call(that);
+    });
 }
 
 },{"d3":11}],2:[function(require,module,exports){
@@ -148,18 +147,18 @@ marital = new points.factor("Marital status","")
     .add_to(inventory);
 
 charge = new points.factor("Charge (most serious)")
-    // .add_point(-20, "Capital felony")
+// .add_point(-20, "Capital felony")
     .add_point(-10, "Class A felony")
     .add_point(-9,  "Class B felony")
     .add_point(-8,  "Class C felony")
     .add_point(-7,  "Class D felony")
-    // .add_point(-6,  "Class E or unclassified felony")
+// .add_point(-6,  "Class E or unclassified felony")
     .add_point(-5,  "Class A misdemeanor")
     .add_point(-4,  "Class B misdemeanor")
     .add_point(-3,  "Class C misdemeanor")
-    // .add_point(-2,  "Class D misdemeanor")
-    // .add_point(-1,  "Unclassified misdemeanor")
-    // .add_point(0,   "Motor vehicle violation")
+// .add_point(-2,  "Class D misdemeanor")
+// .add_point(-1,  "Unclassified misdemeanor")
+// .add_point(0,   "Motor vehicle violation")
     .add_to(inventory);
 
 lives_with = new points.factor("Lives with")
@@ -256,7 +255,6 @@ var charge_parse = function(ch){
 	otype = "misdemeanor";
 
     if (ch.indexOf("Class ") >= 0){
-	console.log("CHARGE SPLIT:", ch.split(" "));
 	oclass = ch.split(" ")[1];
     }
 
@@ -282,7 +280,6 @@ var go_challenge = function(fel, mis, amts){
 	if (rscore > 6) var rscore = 6;
 	if (rscore < -6) var rscore = -6;
 	var index = numeral(rscore).format("+0");
-	console.log("bond_amt()", otype, oclass, rscore, index);
 	
 	var otype = otype.toUpperCase().trim();
 	if (oclass.toUpperCase().indexOf("UNCLASSIFIED") >= 0)
@@ -291,14 +288,8 @@ var go_challenge = function(fel, mis, amts){
 	    var oclass = ("CLASS " + oclass).toUpperCase();
 
 	var matches = amts.filter(function(d){
-	    console.log("bond_amt()", otype, oclass, rscore, index);
-	    console.log(d, oclass, otype);
-
-	    console.log(d, oclass, otype);
-	    
 	    if (d["class"].trim().toUpperCase() == oclass
 		&& d["otype"].trim().toUpperCase() == otype){
-		console.log("MATCH");
 		return true;
 	    }
 
@@ -306,14 +297,10 @@ var go_challenge = function(fel, mis, amts){
 
 
 	});
-	console.log("MATCH:", matches);
 	var row = matches[0];
 	return row[index];
     }
 
-    
-    console.log("Bond amounts", amts);
-    
     var guess_value = null;
     d3.select("#container").html("");
     var challenge = d3.select("#container")
@@ -349,7 +336,7 @@ var go_challenge = function(fel, mis, amts){
 	.reverse(true)
 	.ticks(["Very low risk",
 		"",
-	       "Very high risk"])
+		"Very high risk"])
     
     var slider_sel =  challenge.append("div");
     var result_sel = challenge.append("div").classed("result_sel", true);
@@ -398,7 +385,7 @@ var go_challenge = function(fel, mis, amts){
 	setTimeout(function(){
 	    slider_sel.style("display","none");
 	}, 250);
-	    // .style("filter","blur(3px)");
+	// .style("filter","blur(3px)");
 	d3.select("#submit-button").classed("enabled", false);
 	d3.select("#guess-slider").attr("disabled", true);
 	
@@ -415,63 +402,63 @@ var go_challenge = function(fel, mis, amts){
 	    });
 
 	var end_summary = function(){
-	var g = guess_value;
-	
-	var score = inventory.score();
-	if (score > 9) score = 9;
-	if (score < -9) score = -9;
-	score = Math.round(score);
-	g = Math.round(g);
-	var off_by = Math.round(Math.abs( g - score));
-	if (g < score)
-	    var over_under = "overestimated";
-	else if (g > score)
-	    var over_under = "underestimated";
-	else if (g == score)
-	    var over_under = "correctly estimated";
-	   
-	var headline = "You " + over_under + " this defendant's FTA risk";
+	    var g = guess_value;
+	    
+	    var score = inventory.score();
+	    if (score > 9) score = 9;
+	    if (score < -9) score = -9;
+	    score = Math.round(score);
+	    g = Math.round(g);
+	    var off_by = Math.round(Math.abs( g - score));
+	    if (g < score)
+		var over_under = "overestimated";
+	    else if (g > score)
+		var over_under = "underestimated";
+	    else if (g == score)
+		var over_under = "correctly estimated";
+	    
+	    var headline = "You " + over_under + " this defendant's FTA risk";
 
-	if (off_by == 0)
-	    headine = "Correct!"
-	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
-	
-	msg += "The actuarial pretrial risk assessment score based on "
-	    + "the factors above would be " + numeral(score).format("+0") + ".";
-	result_sel.append("h1")
-	    .text(headline);
-	result_sel.append("div").classed("explainer", true).text(msg);
+	    if (off_by == 0)
+		headine = "Correct!"
+	    var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
+	    
+	    msg += "The actuarial pretrial risk assessment score based on "
+		+ "the factors above would be " + numeral(score).format("+0") + ".";
+	    result_sel.append("h1")
+		.text(headline);
+	    result_sel.append("div").classed("explainer", true).text(msg);
 
-	var amt_line = function(sc){
-	    var ret = "";
-	    if (sc >= 0){
-		ret = "no financial bond";
+	    var amt_line = function(sc){
+		var ret = "";
+		if (sc >= 0){
+		    ret = "no financial bond";
+		}
+		else {
+		    var amt = bond_amt(otype, oclass, sc);
+		    ret = amt.trim();
+		}
+		return ret;
 	    }
-	    else {
-		var amt = bond_amt(otype, oclass, sc);
-		ret = amt.trim();
-	    }
-	    return ret;
-	}
 
-	var your_bail = amt_line(g);
-	console.log("your_bail", your_bail);
-	var real_bail = amt_line(score);
-	console.log("real_bail", real_bail);
+	    var your_bail = amt_line(g);
+	    var real_bail = amt_line(score);
 
-	result_sel.append("h1")
-	    .text(your_bail + " versus " + real_bail );
-	
-	var line_cont = result_sel
-	    .append("div")
-	    .style("width", "100%");
+	    result_sel.append("h1")
+		.text(your_bail + " versus " + real_bail );
+	    
+	    var line_cont = result_sel
+		.append("div")
+		.style("width", "100%");
 
-	var compline = new bar.bar()
-	    .container(line_cont)
-	    .values([9,-9])
-	    .add_marker(new bar.marker(g, "Your guess").bottom(true))
-	    .add_marker(new bar.marker(score, "Actual score"))
-	    .draw();
+	    var compline = new bar.bar()
+		.container(line_cont)
+		.values([9,-9])
+		.add_marker(new bar.marker(g, "Your guess").bottom(true))
+		.add_marker(new bar.marker(score, "Actual score"))
+		.draw();
+
+	    window.scrollTo(0,document.body.scrollHeight);
 
 	}
 
@@ -488,8 +475,8 @@ var go_challenge = function(fel, mis, amts){
 	sel.append("div")
 	    .classed("explainer", true)
 	    .text("Set the slider to indicate your guess of this defendant's"
-		   + " risk score. From left to right, the slider ranges from"
-		   + " least to most risk.");
+		  + " risk score. From left to right, the slider ranges from"
+		  + " least to most risk.");
 	
 	var svg_container = sel.append("div")
 	    .style("width","100%");
@@ -575,22 +562,14 @@ var go_challenge = function(fel, mis, amts){
 
     var example_offense = function(off_type, off_class){
 	
-	console.log("example_offense(" + off_type + ", " + off_class + ")");
 	if (off_type.toLowerCase() == "felony")
 	    var sheet = fel;
 	else if (off_type.toLowerCase() == "misdemeanor")
 	    var sheet = mis;
-	console.log("sheet", sheet);
 	var options = sheet.filter(function(a){
-	    console.log(a["class"].toUpperCase(), off_class.toUpperCase());
-
-	    console.log(a);
-	    console.log(off_type);
 	    return a["class"].toUpperCase() == off_class.toUpperCase()
 		&& a["type"].toUpperCase() == off_type.toUpperCase();
 	});
-
-	console.log("options", options);
 	return options[Math.floor(Math.random() * options.length)];
     }
 
@@ -618,14 +597,12 @@ var go_challenge = function(fel, mis, amts){
 	var txt = d3.select(".tw1").html();
 	var skipstr = "Charge (most serious): "
 	var trimmed = txt.slice(skipstr.length);
-	console.log("trimmed", trimmed);
 	var parsed = charge_parse(trimmed);
 	otype = parsed[0];
 	oclass = parsed[1];
 
-	console.log("parsed: ", parsed);
 	var example = example_offense(otype, oclass)["offense"];
-		console.log("example: ");
+
 	if (typeof(example) != "undefined")
 	    txt += ", " + example
 	d3.select(".tw1").html(txt);
@@ -640,16 +617,15 @@ var go_challenge = function(fel, mis, amts){
 
 
 d3.json(felony_url, function(fel){
-    console.log("felonies", fel);
+
     d3.json(misd_url, function(mis){
 	d3.tsv(bond_url, function(amts){
-	    console.log("misdemeanors", mis);
 	    go_challenge(fel, mis, amts);
 	});
     });
 });
 
-			      
+
 
 },{"./compare_bar.js":1,"./points.js":3,"./slider.js":4,"d3":11,"numeraljs":13}],3:[function(require,module,exports){
 d3 = require("d3");

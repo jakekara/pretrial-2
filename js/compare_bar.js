@@ -83,8 +83,6 @@ bar.prototype.draw = function(){
     var that = this;
     this.__markers.forEach(function(m, i){
 
-	console.log(m, m.__val);
-
 	var y_padding = 3;
 	
 	var x1 = xscale(m.__val);
@@ -92,7 +90,6 @@ bar.prototype.draw = function(){
 	var y1 = that.__font_height + y_padding;
 	var y2 = height - that.__font_height - y_padding;
 
-	console.log(x1, y1, x2, y2);
 	var colors = ["tomato","lightskyblue"];
 
 	svg.append("line")
@@ -113,7 +110,6 @@ bar.prototype.draw = function(){
 	var label_x = x1 - label_width / 2
 	label_x = Math.max(0, label_x);
 	label_x = Math.min(width - label_width, label_x);
-	console.log("label_x", label_x);
 	label.attr("x", label_x);
 
 	if (m.__bottom == true){
@@ -125,5 +121,8 @@ bar.prototype.draw = function(){
 		       + "px");
 	
     });
-    
+
+    d3.select(window).on("resize", function(){
+	that.draw.call(that);
+    });
 }
