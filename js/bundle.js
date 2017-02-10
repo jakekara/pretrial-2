@@ -966,6 +966,15 @@ inventory.prototype.guesser = function(sel){
 }
 
 },{"d3":12,"numeraljs":14,"typewriter-js":15}],4:[function(require,module,exports){
+/*
+ * SVG slider made with d3 scale 
+ * 
+ * jake kara jake@jakekara.com
+ * 
+ */
+
+var exports = exports || {};
+
 var slider = function(){
     this.__enabled = true;
     this.__radius = 10;

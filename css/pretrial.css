@@ -14,7 +14,8 @@ div.factor, div.summary {
 
 .summary table {
   width: 100%;
-  font-family: monaco, courier, monospace;
+  font-family: "Lucida Console", Monaco, monospace;
+  /* font-family: monaco, courier, monospace; */
   font-size: 14px;
   border: 1px solid gray;
   margin-top: 14px; }
