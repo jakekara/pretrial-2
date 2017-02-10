@@ -350,6 +350,17 @@ var go_challenge = function(fel, mis, amts){
 		 b_versus_b += " versus " + real_bail;
 	    result_sel.append("h1")
 		.text(b_versus_b);
+
+
+	    var diff_text = "That's the difference in recommended bond amounts based on your score and the real one.";
+
+	    if (your_bail == real_bail)
+		diff_text = "That's the recommended bond amount based on the defendant's risk assessment score.";
+		
+	    diff_text += " While the risk score has been validated as a predictor of flight risk, there is no real science behind the dollar value of the financial bond amounts.";
+	    result_sel.append("div")
+		.classed("explainer", true)
+		.text(diff_text)
 	    
 	    var line_cont = result_sel
 		.append("div")
