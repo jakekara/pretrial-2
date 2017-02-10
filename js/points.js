@@ -307,6 +307,7 @@ inventory.prototype.display_summary = function(sel){
 	.each(function(d, i){
 	    d3.select(this)
 		.classed("twval" + i, true)
+		.classed("typewriter", true)
 	    	.classed("typewriter-values", true);
 	});
     

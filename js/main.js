@@ -16,18 +16,18 @@ marital = new points.factor("Marital status","")
     .add_to(inventory);
 
 charge = new points.factor("Charge (most serious)")
-    .add_point(-20, "Capital felony")
+    // .add_point(-20, "Capital felony")
     .add_point(-10, "Class A felony")
     .add_point(-9,  "Class B felony")
     .add_point(-8,  "Class C felony")
     .add_point(-7,  "Class D felony")
-    .add_point(-6,  "Class E or unclassified felony")
+    // .add_point(-6,  "Class E or unclassified felony")
     .add_point(-5,  "Class A misdemeanor")
     .add_point(-4,  "Class B misdemeanor")
     .add_point(-3,  "Class C misdemeanor")
     .add_point(-2,  "Class D misdemeanor")
-    .add_point(-1,  "Unclassified misdemeanor")
-    .add_point(0,   "Motor vehicle violation")
+    // .add_point(-1,  "Unclassified misdemeanor")
+    // .add_point(0,   "Motor vehicle violation")
     .add_to(inventory);
 
 lives_with = new points.factor("Lives with")
@@ -202,7 +202,7 @@ var go_challenge = function(fel, mis, amts){
 	.attr("id","submit-button")
 	.classed("enabled", true)
 	.text("Got it");
-    
+
     var summary_sel = challenge.append("div");
     inventory.randomize().display_summary(summary_sel);
     // typewriter.prepare(".typewriter");
@@ -224,6 +224,26 @@ var go_challenge = function(fel, mis, amts){
     var otype = null;
     var oclass = null;
 
+    var block_reveal = true;
+
+    var big_reveal = function(callb){
+	typewriter.prepare(".typewriter-values");
+	var num_factors = inventory.factors.length;
+	var type_val = function( i ){
+	    if (i >= num_factors) {
+		block_reveal = false;
+		callb();
+		return;
+	    }
+	    typewriter.type(".twval" + i)
+		.then(function(){
+		    type_val( i + 1,{"duration":5} );
+		});
+	}
+
+	type_val( 0 );
+    }
+    
     var submit_guess = function(){
 
 	var chg = inventory.factors[1].selected.description;
@@ -256,14 +276,13 @@ var go_challenge = function(fel, mis, amts){
 	guess_value = Math.round(svg_slider.value());
 	
 	d3.selectAll("td[data-factor]")
-	    .text(function(d, i){
+	    .html(function(d, i){
 		var factor_i = d3.select(this).attr("data-factor");
 		return numeral(inventory.factors[factor_i].selected.val)
 		    .format("+0");
 	    });
 
-	typewriter.prepare(".typewriter-values");
-	
+	var end_summary = function(){
 	var g = guess_value;
 	
 	var score = inventory.score();
@@ -322,8 +341,9 @@ var go_challenge = function(fel, mis, amts){
 	    .add_marker(new bar.marker(score, "Actual score"))
 	    .draw();
 
-	console.log(compline);
+	}
 
+	big_reveal(end_summary);
     }
     
     var add_slider = function(sel){
@@ -446,7 +466,7 @@ var go_challenge = function(fel, mis, amts){
     var type_across = function(i) {
 	if (i >= inventory.factors.length) return;
 	
-	typewriter.type(".tw" + i,{duration: 250})
+	typewriter.type(".tw" + i,{"duration": 100})
 	    .then(function(){type_across(i + 1);});
     }
 
