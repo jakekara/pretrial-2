@@ -84,7 +84,7 @@ safety = new points.factor("Safety risk convictions")
     .add_point(0, "Not charged with a safety risk offense"
 	       + " and does not have a safety risk conviction")
     .add_point(-2, "Charged with a safety risk offense"
-	       + " and does have a safety risk convinction")
+	       + " and does have a safety risk conviction")
     .add_to(inventory);
 
 instrument = new points.factor("Dangerous instrument")
@@ -92,9 +92,13 @@ instrument = new points.factor("Dangerous instrument")
     .add_point(-2, "Dangerous instrument involved")
     .add_to(inventory);
 
+// load the regular slide presentation
 // inventory.container(d3.select("#container"));
 // inventory.draw();
 
+/*
+ * colorize
+ */
 var risk_color = function(d, i){
     var colors = ["maroon","tomato","orange","gold","yellow","lightyellow",
 		  "white","aliceblue","lightskyblue",
@@ -103,19 +107,11 @@ var risk_color = function(d, i){
 };
 
 
+/*
+ *  parse the charges string, returning an array containing
+ * the type and class of the offense 
+ */
 var charge_parse = function(ch){
-    // 	.add_point(-20, "Capital felony")
-    // .add_point(-10, "Class A felony")
-    // .add_point(-9,  "Class B felony")
-    // .add_point(-8,  "Class C felony")
-    // .add_point(-7,  "Class D felony")
-    // .add_point(-6,  "Cass E or unclassified felony")
-    // .add_point(-5,  "Class A misdemeanor")
-    // .add_point(-4,  "Class B misdemeanor")
-    // .add_point(-3,  "Class C misdemeanor")
-    // .add_point(-2,  "Class D misdemeanor")
-    // .add_point(-1,  "Unclassified misdemeanor")
-    // .add_point(0,   "Motor vehicle violation")
     var otype = null, oclass = null;
 
     if (ch.indexOf("felony") >= 0)
@@ -140,47 +136,74 @@ var charge_parse = function(ch){
     return [otype, oclass];
 }
 
+var bond_amount = function (otype, oclass, rscore, amts){
+    if (otype.toLowerCase().trim() == "motor vehicle violation") return null;
+    if (otype.toLowerCase().trim() == "capital") return null;
+    if (rscore > 6) var rscore = 6;
+    if (rscore < -6) var rscore = -6;
+    var index = numeral(rscore).format("+0");
+    
+    var otype = otype.toUpperCase().trim();
+    if (oclass.toUpperCase().indexOf("UNCLASSIFIED") >= 0)
+	var oclass = "UNCLASSIFIED"
+    else
+	var oclass = ("CLASS " + oclass).toUpperCase();
+
+    var matches = amts.filter(function(d){
+	if (d["class"].trim().toUpperCase() == oclass
+	    && d["otype"].trim().toUpperCase() == otype){
+	    return true;
+	}
+
+	return false;
+
+
+    });
+    var row = matches[0];
+    return row[index];
+}
+
+
+var get_example_offense = function(off_type, off_class, mis, fel){
+    if (off_type.toLowerCase() == "felony")
+	var sheet = fel;
+    else if (off_type.toLowerCase() == "misdemeanor")
+	var sheet = mis;
+    var options = sheet.filter(function(a){
+	return a["class"].toUpperCase() == off_class.toUpperCase()
+	    && a["type"].toUpperCase() == off_type.toUpperCase();
+    });
+    return options[Math.floor(Math.random() * options.length)];
+}
+
+
 // Version 2 -- challenge
 var go_challenge = function(fel, mis, amts){
 
+    // wrap bond_amount function
     var bond_amt = function (otype, oclass, rscore){
-	if (otype.toLowerCase().trim() == "motor vehicle violation") return null;
-	if (otype.toLowerCase().trim() == "capital") return null;
-	if (rscore > 6) var rscore = 6;
-	if (rscore < -6) var rscore = -6;
-	var index = numeral(rscore).format("+0");
-	
-	var otype = otype.toUpperCase().trim();
-	if (oclass.toUpperCase().indexOf("UNCLASSIFIED") >= 0)
-	    var oclass = "UNCLASSIFIED"
-	else
-	    var oclass = ("CLASS " + oclass).toUpperCase();
-
-	var matches = amts.filter(function(d){
-	    if (d["class"].trim().toUpperCase() == oclass
-		&& d["otype"].trim().toUpperCase() == otype){
-		return true;
-	    }
-
-	    return false;
-
-
-	});
-	var row = matches[0];
-	return row[index];
+	return bond_amount (otype, oclass, rscore, amts);
     }
 
-    var guess_value = null;
-    d3.select("#container").html("");
-    var challenge = d3.select("#container")
+    // wrap get_example_offense function
+    var example_offense = function(off_type, off_class){
+	return get_example_offense(off_type, off_class, mis, fel);
+    }
+
+    var guess_value = null; 		    // the user's guess score
+
+    d3.select("#container").html(""); 	    // clear the countainer
+    
+    var challenge = d3.select("#container") // set up the display
 	.append("div").classed("summary", true);
 
 
     var header_sel = challenge.append("h1")
-	.text("How risky is this defendant?")
+	.text("How much of a 'flight risk' is defendant X?")
+    
     var explainer_sel = challenge.append("div")
 	.classed("explainer", true)
-	.text("Try your hand at guessing how much of a 'flight risk' you think this randomly-generated defendant represents. Judicial branch employees use some of the factors below in their pretrial risk assessment scale, which is used to make recommendations for bail. Beware, some of these factors are not part of the risk assessment.");
+	.text("Try your hand at guessing how much of a 'flight risk' you think a randomly-generated defendant poses based on the factors below. Judicial branch bail staff weight these factors to try and predict how likely the defendant is to show up in court, and ultimately make a recommendation to a judge for either non-financial release or a bond amount.");
 
     var got_it = challenge.append("div")
 	.append("div")
@@ -189,26 +212,25 @@ var go_challenge = function(fel, mis, amts){
 	.classed("fake-button", true)
 	.attr("id","submit-button")
 	.classed("enabled", true)
-	.text("Got it");
+	.text("OK, go");
 
     var summary_sel = challenge.append("div");
-    inventory.randomize().display_summary(summary_sel);
-    // typewriter.prepare(".typewriter");
 
-    // var svg_container = challenge.append("div")
-    // 	.style("width","100%");
+    inventory.randomize(); 		    // generate random scenario
     
-    // var svg = svg_container.append("svg");    
+    inventory.display_summary(summary_sel); // move function to this module
+    
     var svg_slider = new slider.slider()
 	.values([-9, 9])
 	.radius(20)
 	.reverse(true)
-	.ticks(["Very low risk",
+	.ticks(["<< Lower risk",
 		"",
-		"Very high risk"])
+		"Higher risk >>"])
     
     var slider_sel =  challenge.append("div");
     var result_sel = challenge.append("div").classed("result_sel", true);
+    
     var otype = null;
     var oclass = null;
 
@@ -241,7 +263,6 @@ var go_challenge = function(fel, mis, amts){
 	svg_slider.enabled(false);
 	
 	summary_sel
-	// .style("filter","blur(2px)") //
 	    .transition()
 	    .duration(500)
 	    .style("opacity",0.75);
@@ -254,13 +275,9 @@ var go_challenge = function(fel, mis, amts){
 	setTimeout(function(){
 	    slider_sel.style("display","none");
 	}, 250);
-	// .style("filter","blur(3px)");
 	d3.select("#submit-button").classed("enabled", false);
 	d3.select("#guess-slider").attr("disabled", true);
 	
-	// d3.select("#picker-svg").classed("enabled", false);
-
-	// guess_value = -1 * Number(d3.select("#guess-slider").node().value);
 	guess_value = Math.round(svg_slider.value());
 	
 	d3.selectAll("td[data-factor]")
@@ -286,13 +303,25 @@ var go_challenge = function(fel, mis, amts){
 	    else if (g == score)
 		var over_under = "correctly estimated";
 	    
-	    var headline = "You " + over_under + " this defendant's FTA risk";
+	    var headline = "You " + over_under + " this defendant's flight risk";
 
 	    if (off_by == 0)
 		headine = "Correct!"
-	    var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
+
+	    var hi_lo = function(sc){
+		ret = "";
+		if (sc >= 0)
+		    return "little or no";
+		if (sc < 0)
+		    ret = "moderate";
+		if (sc < -3)
+		    ret = "relatively high";
+		return ret;
+	    };
 	    
-	    msg += "The actuarial pretrial risk assessment score based on "
+	    var msg ="You guessed this defendant would represent " + hi_lo(g) + " risk of failure to appear, with a score of " + numeral(g).format("+0") + ". The more negative the score, the higher the risk, and any score zero of above typically results in a recommendation for release without a financial bond. ";
+	    
+	    msg += "The real pretrial risk score based on "
 		+ "the factors above would be " + numeral(score).format("+0") + ".";
 	    result_sel.append("h1")
 		.text(headline);
@@ -313,8 +342,11 @@ var go_challenge = function(fel, mis, amts){
 	    var your_bail = amt_line(g);
 	    var real_bail = amt_line(score);
 
+	    var b_versus_b = your_bail
+	    if (your_bail != real_bail)
+		 b_versus_b += " versus " + real_bail;
 	    result_sel.append("h1")
-		.text(your_bail + " versus " + real_bail );
+		.text(b_versus_b);
 	    
 	    var line_cont = result_sel
 		.append("div")
@@ -339,13 +371,14 @@ var go_challenge = function(fel, mis, amts){
 	// var svg_height = 40;
 
 	var guess_display = sel.append("h1")
-	    .text("Your guess");
+	    .text("Your assessment");
 
 	sel.append("div")
 	    .classed("explainer", true)
-	    .text("Set the slider to indicate your guess of this defendant's"
-		  + " risk score. From left to right, the slider ranges from"
-		  + " least to most risk.");
+	    .text("Use the slider to indicate how much risk of failure to appear"
+		  + " you feel the above-described defendant poses. When you're"
+		  + " confident in your choice, hit the 'submit recommendation'"
+		  + " button below to see how you did.");
 	
 	var svg_container = sel.append("div")
 	    .style("width","100%");
@@ -355,20 +388,6 @@ var go_challenge = function(fel, mis, amts){
 	svg_slider.svg(svg)
 	    .draw();
 
-	// var slider = sel.append("input")
-	//     .attr("id","guess-slider")
-	//     .attr("type","range")
-	//     .attr("min",-6)
-	//     .attr("max",6);
-	// slider.node().value = 0;
-	
-	// var svg = sel.append("svg")
-	//     .attr("id","picker-svg")
-	//     .style("height", svg_height + "px")
-	//     .style("border","1px solid gray")
-	//     .classed("enabled", true)
-	//     .style("width", sel.node().getBoundingClientRect().width);
-
 	var submit = sel.append("div")
 	    .append("div")
 	    .classed("fake-button-container", true)
@@ -376,77 +395,24 @@ var go_challenge = function(fel, mis, amts){
 	    .classed("fake-button", true)
 	    .attr("id","submit-button")
 	    .classed("enabled", true)
-	    .text("Guess")
+	    .text("Submit recommendation")
 	    .on("click", submit_guess);
 
 	sel.append("div").classed("clear-both", true)
-	
-	// var bbox = svg.node().getBoundingClientRect();
-	
-	// var hor_padding = 10;
-	// var radius = 10;
-	// var val_range = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6].reverse();
-	// var scale = d3.scaleLinear()
-	//     .domain([val_range[0],val_range.reverse()[0]])
-	//     .range([hor_padding, bbox.width - hor_padding])
-
-	// var scale_inv = d3.scaleLinear()
-	//     .domain([hor_padding, bbox.width - hor_padding])
-	//     .range(val_range);
-
-	// var box_count = 13;
-	// var box_width = bbox.width / box_count;
 
 	var guess = function(d, i){
-
-	    // if (svg.classed("enabled") == false) return;
-	    
-	    // svg.selectAll("rect.box")
-	    // 	.classed("selected", false);
-
 	    d3.select(this).classed("selected", true);
-
 	    guess_value = d3.select(this).attr("data-val");
-
 	    submit.classed("enabled", true);
 
 	}
-	
-	// svg.selectAll("rect.box")
-	//     .data(val_range)
-	//     .enter()
-	//     .append("rect")
-	//     .classed("box", true)
-	//     .attr("x",function(d, i){
-	// 	return i * box_width;
-	//     })
-	//     .attr("y", 0)
-	//     .attr("width",box_width)
-	//     .attr("height",svg_height)
-	//     .attr("data-val", function(d){ return d; })
-	//     .style("fill", risk_color)
-	//     .style("strok-width","0px")
-	//     .on("click", guess);
-    }
 
-    var example_offense = function(off_type, off_class){
-	
-	if (off_type.toLowerCase() == "felony")
-	    var sheet = fel;
-	else if (off_type.toLowerCase() == "misdemeanor")
-	    var sheet = mis;
-	var options = sheet.filter(function(a){
-	    return a["class"].toUpperCase() == off_class.toUpperCase()
-		&& a["type"].toUpperCase() == off_type.toUpperCase();
-	});
-	return options[Math.floor(Math.random() * options.length)];
     }
-
 
     var type_across = function(i) {
 	if (i >= inventory.factors.length) return;
 	
-	typewriter.type(".tw" + i,{"duration": 100})
+	typewriter.type(".tw" + i,{duration: 50})
 	    .then(function(){type_across(i + 1);});
     }
 
@@ -484,9 +450,8 @@ var go_challenge = function(fel, mis, amts){
 
 }
 
-
+// load JS files and go
 d3.json(felony_url, function(fel){
-
     d3.json(misd_url, function(mis){
 	d3.tsv(bond_url, function(amts){
 	    go_challenge(fel, mis, amts);

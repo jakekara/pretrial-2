@@ -321,12 +321,6 @@ inventory.prototype.display_summary = function(sel){
 		.classed("tw" + i, true);
 	});
 
-
-    
-	//     typewriter.type('.tw' + i);
-	// });
-
-
 }
 
 inventory.prototype.guesser = function(sel){

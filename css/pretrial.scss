@@ -175,3 +175,8 @@ svg circle {
     stroke: gray;
     fill: palegreen;
 }
+
+svg circle:hover{
+    cursor: pointer;
+    fill-opacity: 0.75;
+}
