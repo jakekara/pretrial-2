@@ -4,13 +4,19 @@ var wiggler = function(sel){
     this.d3selection = sel;
     this.__auto = true;
     this.__degree = 5;
-    this.__duration = (250);
+    this.__duration = 200;
     this.__frequency = 1000 * 5;
     this.__ease = d3.easeCubicIn;
     return this;
 }
 
 exports.wiggler = wiggler;
+
+wiggler.prototype.degree = function(d){
+    if (typeof(d) == "undefined") return this.__degree;
+    this.__degree = d;
+    return this;
+}
 
 wiggler.prototype.n_to_degs = function(n){
     return n + "deg"
@@ -84,6 +90,7 @@ wiggler.prototype.frequency = function(f){
     return this;
 }
 
+
 wiggler.prototype.dance_party = function(delay){
     var delay = delay || 0;
 
@@ -94,4 +101,6 @@ wiggler.prototype.dance_party = function(delay){
 	    that.dance();
 	});
     }, delay);
+
+    return this;
 }

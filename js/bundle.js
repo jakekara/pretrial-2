@@ -349,6 +349,15 @@ var go_challenge = function(fel, mis, amts){
     var w = new wiggler.wiggler(got_it)
 	.frequency(2* 1000).dance_party(5);
 
+    got_it.on("mouseover", function(){
+	w.stop();
+	w.frequency(250).dance_party();
+    });
+
+    got_it.on("mouseout", function(){
+	w.frequency(2 * 1000).dance_party();
+    });
+
     var summary_sel = challenge.append("div");
 
     inventory.randomize(); 		    // generate random scenario
@@ -530,7 +539,17 @@ var go_challenge = function(fel, mis, amts){
 		    go_challenge(fel, mis, amts);
 		});
 
-	    new wiggler.wiggler(retry_button).dance_party();
+	    var rwig = new wiggler.wiggler(retry_button).dance_party();
+
+	    retry_button
+		.on("mouseover", function(){
+		    rwig.stop();
+		    rwig.frequency(250).dance_party();
+		})
+		.on("mouseout", function(){
+		    rwig.stop();
+		    rwig.frequency(1000 * 5).dance_party();
+		});
 
 	    window.scrollTo(0,document.body.scrollHeight);
 
@@ -570,6 +589,17 @@ var go_challenge = function(fel, mis, amts){
 	    .classed("enabled", true)
 	    .text("Submit recommendation")
 	    .on("click", submit_guess);
+
+	var sub_wiggler = new wiggler.wiggler(submit);
+
+	submit
+	    .on("mouseover",function(){
+		sub_wiggler.degree(1).frequency(250).dance_party();
+	    })
+	    .on("mouseout", function(){
+		sub_wiggler.stop();
+	    })
+	
 
 	sel.append("div").classed("clear-both", true)
 
@@ -1171,13 +1201,19 @@ var wiggler = function(sel){
     this.d3selection = sel;
     this.__auto = true;
     this.__degree = 5;
-    this.__duration = (250);
+    this.__duration = 200;
     this.__frequency = 1000 * 5;
     this.__ease = d3.easeCubicIn;
     return this;
 }
 
 exports.wiggler = wiggler;
+
+wiggler.prototype.degree = function(d){
+    if (typeof(d) == "undefined") return this.__degree;
+    this.__degree = d;
+    return this;
+}
 
 wiggler.prototype.n_to_degs = function(n){
     return n + "deg"
@@ -1251,6 +1287,7 @@ wiggler.prototype.frequency = function(f){
     return this;
 }
 
+
 wiggler.prototype.dance_party = function(delay){
     var delay = delay || 0;
 
@@ -1261,6 +1298,8 @@ wiggler.prototype.dance_party = function(delay){
 	    that.dance();
 	});
     }, delay);
+
+    return this;
 }
 
 },{"d3":12}],6:[function(require,module,exports){
