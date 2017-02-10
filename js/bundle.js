@@ -157,7 +157,7 @@ charge = new points.factor("Charge (most serious)")
     .add_point(-5,  "Class A misdemeanor")
     .add_point(-4,  "Class B misdemeanor")
     .add_point(-3,  "Class C misdemeanor")
-    .add_point(-2,  "Class D misdemeanor")
+    // .add_point(-2,  "Class D misdemeanor")
     // .add_point(-1,  "Unclassified misdemeanor")
     // .add_point(0,   "Motor vehicle violation")
     .add_to(inventory);
