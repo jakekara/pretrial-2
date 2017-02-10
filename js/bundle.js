@@ -1079,7 +1079,6 @@ slider.prototype.knob_make_draggable = function(){
     var drag_end = function(){
 	if (that.enabled() == false) return;
 	that.value(that.iscale()(d3.event.x));
-	console.log("set value to ", that.value());
     }
 
     var drag_drag = function(){
@@ -1102,7 +1101,6 @@ slider.prototype.reverse = function(v){
 
 slider.prototype.enabled = function(v){
     if (typeof(v) == "undefined") return this.__enabled;
-    console.log("setting enabled to " + v);
     this.__enabled = v;
     if (v == false) this.svg().classed("disabled", true);
     return this;
@@ -1183,7 +1181,7 @@ wiggler.prototype.wiggle_to = function(n){
 
     return this.d3selection
 	.transition()
-	.duration(this.__duration)
+	.duration(Math.round(Math.random() * this.__duration))
 	.ease(this.__ease)
 	.style("transform", tfunc);
 }
@@ -1201,7 +1199,7 @@ wiggler.prototype.twist_to = function(n){
 }
 
 wiggler.prototype.dance = function(){
-    return this.twist_to(this.__degree);
+    return this.twist_to(Math.round(Math.random() * this.__degree));
 }
 
 wiggler.prototype.spin = function(){

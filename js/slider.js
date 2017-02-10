@@ -116,7 +116,6 @@ slider.prototype.knob_make_draggable = function(){
     var drag_end = function(){
 	if (that.enabled() == false) return;
 	that.value(that.iscale()(d3.event.x));
-	console.log("set value to ", that.value());
     }
 
     var drag_drag = function(){
@@ -139,7 +138,6 @@ slider.prototype.reverse = function(v){
 
 slider.prototype.enabled = function(v){
     if (typeof(v) == "undefined") return this.__enabled;
-    console.log("setting enabled to " + v);
     this.__enabled = v;
     if (v == false) this.svg().classed("disabled", true);
     return this;

@@ -29,7 +29,7 @@ wiggler.prototype.wiggle_to = function(n){
 
     return this.d3selection
 	.transition()
-	.duration(this.__duration)
+	.duration(Math.round(Math.random() * this.__duration))
 	.ease(this.__ease)
 	.style("transform", tfunc);
 }
@@ -47,7 +47,7 @@ wiggler.prototype.twist_to = function(n){
 }
 
 wiggler.prototype.dance = function(){
-    return this.twist_to(this.__degree);
+    return this.twist_to(Math.round(Math.random() * this.__degree));
 }
 
 wiggler.prototype.spin = function(){
