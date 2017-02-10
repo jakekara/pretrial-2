@@ -337,7 +337,7 @@ var go_challenge = function(fel, mis, amts){
 		}
 		else {
 		    var amt = bond_amt(otype, oclass, sc);
-		    ret = amt.trim();
+		    ret = amt.trim() + " bond";
 		}
 		return ret;
 	    }
@@ -359,10 +359,10 @@ var go_challenge = function(fel, mis, amts){
 		.text(capitalize(b_versus_b));
 
 
-	    var diff_text = "That's the difference in recommended bond amounts based on your score and the real one.";
+	    var diff_text = "That's the difference in bail recommendations based on your score and the real one.";
 
 	    if (your_bail == real_bail)
-		diff_text = "That's the recommended bond amount based on the defendant's risk assessment score.";
+		diff_text = "That's the bail recommendation based on the defendant's risk assessment score.";
 		
 	    diff_text += " While the risk score has been validated as a predictor of flight risk, there is no real science behind the dollar value of the financial bond amounts.";
 	    result_sel.append("div")
@@ -379,6 +379,21 @@ var go_challenge = function(fel, mis, amts){
 		.add_marker(new bar.marker(g, "Your guess").bottom(true))
 		.add_marker(new bar.marker(score, "Actual score"))
 		.draw();
+
+
+	    var retry_button = result_sel.append("div")
+		.append("div")
+		.classed("fake-button-container", true)
+		.append("div")
+		.classed("fake-button", true)
+		.attr("id","retry-button")
+		.classed("enabled", true)
+		.text("Try again")
+		.on("click", function(){
+		    go_challenge(fel, mis, amts);
+		});
+
+	    new wiggler.wiggler(retry_button).dance_party();
 
 	    window.scrollTo(0,document.body.scrollHeight);
 
