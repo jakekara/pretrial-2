@@ -138,6 +138,7 @@ const bar = require("./compare_bar.js");
 
 var felony_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
 var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/felony-examples.json";
+var bond_url = "https://cdn.rawgit.com/trendct-data/ct-penal-code/6f75c329/data/bond_amount_table.tsv"
 
 inventory = new points.inventory();
 
@@ -152,7 +153,7 @@ charge = new points.factor("Charge (most serious)")
     .add_point(-9,  "Class B felony")
     .add_point(-8,  "Class C felony")
     .add_point(-7,  "Class D felony")
-    .add_point(-6,  "Cass E or unclassified felony")
+    .add_point(-6,  "Class E or unclassified felony")
     .add_point(-5,  "Class A misdemeanor")
     .add_point(-4,  "Class B misdemeanor")
     .add_point(-3,  "Class C misdemeanor")
@@ -233,9 +234,86 @@ var risk_color = function(d, i){
     return colors[i];
 };
 
-// Version 2 -- challenge
-var go_challenge = function(fel, mis){
 
+var charge_parse = function(ch){
+    // 	.add_point(-20, "Capital felony")
+    // .add_point(-10, "Class A felony")
+    // .add_point(-9,  "Class B felony")
+    // .add_point(-8,  "Class C felony")
+    // .add_point(-7,  "Class D felony")
+    // .add_point(-6,  "Cass E or unclassified felony")
+    // .add_point(-5,  "Class A misdemeanor")
+    // .add_point(-4,  "Class B misdemeanor")
+    // .add_point(-3,  "Class C misdemeanor")
+    // .add_point(-2,  "Class D misdemeanor")
+    // .add_point(-1,  "Unclassified misdemeanor")
+    // .add_point(0,   "Motor vehicle violation")
+    var otype = null, oclass = null;
+
+    if (ch.indexOf("felony") >= 0)
+	otype = "felony";
+    else if (ch.indexOf("misdemeanor") >= 0)
+	otype = "misdemeanor";
+
+    if (ch.indexOf("Class ") >= 0){
+	console.log("CHARGE SPLIT:", ch.split(" "));
+	oclass = ch.split(" ")[1];
+    }
+
+    if (ch.toLowerCase().indexOf("unclassified") >= 0){
+	otype = ch.split(" ").reverse()[0].toLowerCase();
+	oclass = "unclassified";
+    }
+
+    if (ch.indexOf("Capital") >= 0){
+	oclass = "felony";
+	otype = "capital";
+    }
+    if (ch == "Motor vehicle violation") otype = "motor vehicle violation";
+    return [otype, oclass];
+}
+
+// Version 2 -- challenge
+var go_challenge = function(fel, mis, amts){
+
+    var bond_amt = function (otype, oclass, rscore){
+	if (otype.toLowerCase().trim() == "motor vehicle violation") return null;
+	if (otype.toLowerCase().trim() == "capital") return null;
+	if (rscore > 6) var rscore = 6;
+	if (rscore < -6) var rscore = -6;
+	var index = numeral(rscore).format("+0");
+	console.log("bond_amt()", otype, oclass, rscore, index);
+	
+	var otype = otype.toUpperCase().trim();
+	if (oclass.toUpperCase().indexOf("UNCLASSIFIED") >= 0)
+	    var oclass = "UNCLASSIFIED"
+	else
+	    var oclass = ("CLASS " + oclass).toUpperCase();
+
+	var matches = amts.filter(function(d){
+	    console.log("bond_amt()", otype, oclass, rscore, index);
+	    console.log(d, oclass, otype);
+
+	    console.log(d, oclass, otype);
+	    
+	    if (d["class"].trim().toUpperCase() == oclass
+		&& d["otype"].trim().toUpperCase() == otype){
+		console.log("MATCH");
+		return true;
+	    }
+
+	    return false;
+
+
+	});
+	console.log("MATCH:", matches);
+	var row = matches[0];
+	return row[index];
+    }
+
+    
+    console.log("Bond amounts", amts);
+    
     var guess_value = null;
     d3.select("#container").html("");
     var challenge = d3.select("#container")
@@ -259,7 +337,7 @@ var go_challenge = function(fel, mis){
     
     var summary_sel = challenge.append("div");
     inventory.randomize().display_summary(summary_sel);
-    typewriter.prepare(".typewriter");
+    // typewriter.prepare(".typewriter");
 
     // var svg_container = challenge.append("div")
     // 	.style("width","100%");
@@ -275,9 +353,13 @@ var go_challenge = function(fel, mis){
     
     var slider_sel =  challenge.append("div");
     var result_sel = challenge.append("div").classed("result_sel", true);
+    var otype = null;
+    var oclass = null;
 
     var submit_guess = function(){
-	
+
+	var chg = inventory.factors[1].selected.description;
+
 	if (d3.select(this).classed("enabled") == false) return;
 	
 	svg_slider.enabled(false);
@@ -331,8 +413,6 @@ var go_challenge = function(fel, mis){
 	   
 	var headline = "You " + over_under + " this defendant's FTA risk";
 
-	console.log("off_by", off_by);
-	
 	if (off_by == 0)
 	    headine = "Correct!"
 	var msg ="You guessed this defendant would have a risk score of " + numeral(g).format("+0") + ". ";
@@ -343,6 +423,26 @@ var go_challenge = function(fel, mis){
 	    .text(headline);
 	result_sel.append("div").classed("explainer", true).text(msg);
 
+	var amt_line = function(sc){
+	    var ret = "";
+	    if (sc >= 0){
+		ret = "no financial bond";
+	    }
+	    else {
+		var amt = bond_amt(otype, oclass, sc);
+		ret = amt.trim();
+	    }
+	    return ret;
+	}
+
+	var your_bail = amt_line(g);
+	console.log("your_bail", your_bail);
+	var real_bail = amt_line(score);
+	console.log("real_bail", real_bail);
+
+	result_sel.append("h1")
+	    .text(your_bail + " versus " + real_bail );
+	
 	var line_cont = result_sel
 	    .append("div")
 	    .style("width", "100%");
@@ -451,23 +551,27 @@ var go_challenge = function(fel, mis){
 	//     .style("fill", risk_color)
 	//     .style("strok-width","0px")
 	//     .on("click", guess);
-	
-	
-
     }
 
     var example_offense = function(off_type, off_class){
+	
+	console.log("example_offense(" + off_type + ", " + off_class + ")");
 	if (off_type.toLowerCase() == "felony")
 	    var sheet = fel;
 	else if (off_type.toLowerCase() == "misdemeanor")
 	    var sheet = mis;
-
+	console.log("sheet", sheet);
 	var options = sheet.filter(function(a){
-	    return a["class"].toUpperCase() == off_class.toUpperCase();
+	    console.log(a["class"].toUpperCase(), off_class.toUpperCase());
+
+	    console.log(a);
+	    console.log(off_type);
+	    return a["class"].toUpperCase() == off_class.toUpperCase()
+		&& a["type"].toUpperCase() == off_type.toUpperCase();
 	});
 
-
-	return options[Math.random() * options.length];
+	console.log("options", options);
+	return options[Math.floor(Math.random() * options.length)];
     }
 
 
@@ -481,7 +585,6 @@ var go_challenge = function(fel, mis){
     summary_sel.style("display","none");
     slider_sel.style("visibility","hidden")
 	.style("height","0px");
-
     got_it.on("click", function(){
 	got_it.transition().duration(250)
 	    .style("opacity",0)
@@ -490,6 +593,24 @@ var go_challenge = function(fel, mis){
 	summary_sel.style("display",null);
 	slider_sel.style("visibility","visible")
 	    .style("height",null);
+
+	// Add example charge
+	var txt = d3.select(".tw1").html();
+	var skipstr = "Charge (most serious): "
+	var trimmed = txt.slice(skipstr.length);
+	console.log("trimmed", trimmed);
+	var parsed = charge_parse(trimmed);
+	otype = parsed[0];
+	oclass = parsed[1];
+
+	console.log("parsed: ", parsed);
+	var example = example_offense(otype, oclass)["offense"];
+		console.log("example: ");
+	if (typeof(example) != "undefined")
+	    txt += ", " + example
+	d3.select(".tw1").html(txt);
+
+	typewriter.prepare(".typewriter");
 	type_across(0);
     });
     
@@ -501,8 +622,10 @@ var go_challenge = function(fel, mis){
 d3.json(felony_url, function(fel){
     console.log("felonies", fel);
     d3.json(misd_url, function(mis){
-	console.log("misdemeanors", mis);
-	go_challenge(fel, mis);
+	d3.tsv(bond_url, function(amts){
+	    console.log("misdemeanors", mis);
+	    go_challenge(fel, mis, amts);
+	});
     });
 });
 
