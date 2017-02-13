@@ -9,9 +9,9 @@ wiggler = require("./wiggle.js");
 // var misd_url = "https://rawgit.com/trendct-data/ct-penal-code/master/output/misdemeanor-examples.json";
 // var bond_url = "https://cdn.rawgit.com/trendct-data/ct-penal-code/6f75c329/data/bond_amount_table.tsv"
 
-var felonly_url = "../data/felony-examples.json";
-var misd_url = "../data/misdemeanor-examples.json";
-var bond_url = "../data/bond_amount_table.tsv";
+var felony_url = "data/felony-examples.json";
+var misd_url = "data/misdemeanor-examples.json";
+var bond_url = "data/bond_amount_table.tsv";
 
 inventory = new points.inventory();
 
