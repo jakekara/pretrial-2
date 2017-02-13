@@ -1,5 +1,6 @@
 d3 = require("d3");
 const numeral = require("numeraljs");
+require('es6-promise').polyfill();
 typewriter = require("typewriter-js");
 
 var point = function(val, description){
