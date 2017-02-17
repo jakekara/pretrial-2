@@ -15,11 +15,13 @@ var bond_url = "data/bond_amount_table.tsv";
 
 inventory = new points.inventory();
 
+// 1
 marital = new points.factor("Marital status","")
     .add_point(0,"Not married")
     .add_point(3, "Married")
     .add_to(inventory);
 
+// 2
 charge = new points.factor("Charge (most serious)")
 // .add_point(-20, "Capital felony")
     .add_point(-10, "Class A felony")
@@ -35,63 +37,84 @@ charge = new points.factor("Charge (most serious)")
 // .add_point(0,   "Motor vehicle violation")
     .add_to(inventory);
 
+// 3
 lives_with = new points.factor("Lives with")
     .add_point(0, "Alone")
     .add_point(2, "Nonimmediate family or roommate")
     .add_point(3, "Immediate family")
     .add_to(inventory);
 
+// 4
 references = new points.factor("Verifiable references")
     .add_point(0, "No")
     .add_point(2, "Yes")
+    .add_to(inventory);
 
+// 5
 support = new points.factor("Means of support")
     .add_point(0, "None or incarcerated")
     .add_point(2, "Reliance on others (includes government support)")
     .add_point(4, "Self-reliant (part-time, seasonal and full-time employment)")
     .add_to(inventory);
 
+// 6
 duration_employed = new points.factor("Length at employer")
     .add_point(0, "Less than one year")
     .add_point(1, "One year but less than two years")
     .add_point(2, "Two or more years at current job")
     .add_to(inventory);
 
+// 7
 education = new points.factor("Education")
     .add_point(0, "High school or less")
     .add_point(2, "More than high school")
     .add_to(inventory);
 
+// 8
 substance = new points.factor("Substance/mental health")
     .add_point(0, "No")
     .add_point(-1, "Yes")
     .add_to(inventory);
 
+// 9
 prior_fta = new points.factor("Prior failure to appear")
     .add_point(1, "No failures to appear")
     .add_point(-2, "Prior FTA for misdemeanor charge")
     .add_point(-3, "Prior FTA for a felony charge")
     .add_to(inventory)
 
+// 10
 convictions = new points.factor("Number of convictions")
     .add_point(0, "No convictions")
     .add_point(-1, "One or two convictions")
-    .add_point(-2, "Prior felony convictions")
+    .add_point(-2, "More than two convictions")
     .add_to(inventory);
 
+// 11
 record = new points.factor("Criminal record")
     .add_point(2, "No prior record")
     .add_point(-1, "Prior misdemeanor convictions")
     .add_point(-2, "Prior felony convictions")
-    .add_to(inventory)
+    .add_to(inventory);
 
+// 12
 safety = new points.factor("Safety risk convictions")
     .add_point(0, "Not charged with a safety risk offense"
 	       + " and does not have a safety risk conviction")
     .add_point(-2, "Charged with a safety risk offense"
-	       + " and does have a safety risk conviction")
+	       + " and has a safety risk conviction")
     .add_to(inventory);
 
+// 13
+safety_pending = new points.factor("Safety risk pending")
+    .add_point(0, "Not charged with a safety risk offense"
+	       + " and does not have a safety risk offense pending")
+    .add_point(-2, "Charged with a safety risk offense"
+	       + " and has a safety risk offense pending")
+    .add_to(inventory);
+
+
+// 14
 instrument = new points.factor("Dangerous instrument")
     .add_point(0, "No dangerous instrument involved")
     .add_point(-2, "Dangerous instrument involved")
@@ -204,11 +227,11 @@ var go_challenge = function(fel, mis, amts){
 
 
     var header_sel = challenge.append("h1")
-	.text("How much of a 'flight risk' is defendant X?")
+	.text("Can you set bail for defendant X?")
     
     var explainer_sel = challenge.append("div")
 	.classed("explainer", true)
-	.text("Try your hand at guessing how much of a 'flight risk' you think a randomly-generated defendant poses based on the factors below. Judicial branch bail staff weight these factors to try and predict how likely the defendant is to show up in court, and ultimately make a recommendation to a judge for either non-financial release or a bond amount.");
+	.text("Try your hand at guessing how much of a risk of failure to appear in court and threat to public safety you think a randomly-generated defendant poses. Judicial Branch bail staff use a point system to weight 14 factors to predict risk when making bail recommendations.");
 
     var got_it = challenge.append("div")
 	.append("div")
@@ -234,6 +257,16 @@ var go_challenge = function(fel, mis, amts){
     var summary_sel = challenge.append("div");
 
     inventory.randomize(); 		    // generate random scenario
+
+    // Correct related items so they are not independently random
+    // if no convinctions, both record and safety_convictions should be no
+    if (convictions.selected.val == 0){
+	record.selected = record.points[0];
+	safety.selected = safety.points[0];
+    }
+    else {
+	record.selected = record.points[1 + Math.round(Math.random() * 1)];
+    }
     
     inventory.display_summary(summary_sel); // move function to this module
     
@@ -324,7 +357,7 @@ var go_challenge = function(fel, mis, amts){
 	    else if (g == score)
 		var over_under = "correctly estimated";
 	    
-	    var headline = "You " + over_under + " this defendant's flight risk";
+	    var headline = "You " + over_under + " this defendant risk";
 
 	    if (off_by == 0)
 		headine = "Correct!"
@@ -340,7 +373,7 @@ var go_challenge = function(fel, mis, amts){
 		return ret;
 	    };
 	    
-	    var msg ="You guessed this defendant would represent " + hi_lo(g) + " risk of failure to appear, with a score of " + numeral(g).format("+0") + ". The more negative the score, the higher the risk, and any score zero of above typically results in a recommendation for release without a financial bond. ";
+	    var msg ="You guessed this defendant would represent " + hi_lo(g) + " risk, with a score of " + numeral(g).format("+0") + ". The more negative the score, the higher the risk, and any score zero of above typically results in a recommendation for release without a financial bond. ";
 	    
 	    msg += "The real pretrial risk score based on "
 		+ "the factors above would be " + numeral(score).format("+0") + ".";
@@ -377,12 +410,12 @@ var go_challenge = function(fel, mis, amts){
 		.text(capitalize(b_versus_b));
 
 
-	    var diff_text = "That's the difference in bail recommendations based on your score and the real one.";
+	    var diff_text = "That's the difference in bail recommendations based on your score and the starting point for a real one.";
 
 	    if (your_bail == real_bail)
-		diff_text = "That's the bail recommendation based on the defendant's risk assessment score.";
+		diff_text = "That's the starting point for a bail recommendation based on the defendant's risk assessment score.";
 		
-	    diff_text += " When a financial bail is recommended, the recommended dollar amount comes from a preset table of bond amounts. While the risk score has been validated as a predictor of flight risk, there is no real science behind the dollar value of the financial bond amounts. Ultimately this recommendation is one of the elements a judge considers when setting bail.";
+	    diff_text += " When a financial bail is recommended, a dollar amount from a table of bond amounts is used as a starting point by bail staff, who consider other mitigating and aggravating factors.";
 	    
 	    result_sel.append("div")
 		.classed("explainer", true)
