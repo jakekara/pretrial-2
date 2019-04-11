@@ -12,7 +12,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 300; }
 
 div.factor, div.summary {
-  margin: 10px;
+  margin: 1px;
   padding: 10px;
   /* border: 4px dotted lightgray; */
   border: 1px solid lightgray;
@@ -94,7 +94,8 @@ div.top-bar {
 .branding-bar {
   text-align: right;
   height: 20px;
-  margin-right: 10px; }
+  margin-right: 10px;
+  padding: 4px; }
 
 .branding-bar div.logo {
   max-height: 100%; }
